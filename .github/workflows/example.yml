@@ -1,0 +1,39 @@
+name: OpenClaw Bot
+
+on:
+  schedule:
+    # Heartbeat every 6 hours
+    - cron: '0 */6 * * *'
+  
+  issue_comment:
+    types: [created]
+  
+  issues:
+    types: [opened]
+  
+  pull_request:
+    types: [opened, synchronize]
+  
+  workflow_dispatch:
+
+jobs:
+  openclaw:
+    runs-on: ubuntu-latest
+    
+    # Only run on issue comments that mention the bot
+    if: |
+      github.event_name != 'issue_comment' || 
+      contains(github.event.comment.body, '@openclaw')
+    
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    
+    steps:
+      - name: Run OpenClaw
+        uses: offloadmywork/openclaw-github-app@main
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          model: claude-sonnet-4-20250514
+          github_token: ${{ secrets.GITHUB_TOKEN }}

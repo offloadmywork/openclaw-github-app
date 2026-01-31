@@ -1,0 +1,54 @@
+name: 'OpenClaw GitHub App'
+description: 'AI-powered GitHub bot running on GitHub Actions'
+author: 'offloadmywork'
+
+branding:
+  icon: 'cpu'
+  color: 'purple'
+
+inputs:
+  anthropic_api_key:
+    description: 'Anthropic API key for Claude'
+    required: true
+  model:
+    description: 'Claude model to use'
+    required: false
+    default: 'claude-sonnet-4-20250514'
+  workspace_path:
+    description: 'Path to workspace directory'
+    required: false
+    default: '.openclaw'
+  github_token:
+    description: 'GitHub token for API access'
+    required: false
+    default: ${{ github.token }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+    
+    - name: Install dependencies
+      shell: bash
+      run: |
+        cd ${{ github.action_path }}
+        npm ci --only=production
+    
+    - name: Run OpenClaw
+      shell: bash
+      env:
+        INPUT_ANTHROPIC_API_KEY: ${{ inputs.anthropic_api_key }}
+        INPUT_MODEL: ${{ inputs.model }}
+        INPUT_WORKSPACE_PATH: ${{ inputs.workspace_path }}
+        INPUT_GITHUB_TOKEN: ${{ inputs.github_token }}
+      run: |
+        cd ${{ github.action_path }}
+        node dist/index.js
