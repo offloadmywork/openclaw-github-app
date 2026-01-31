@@ -3,29 +3,25 @@ import * as core from '@actions/core';
 
 export interface TriggerContext {
   type: 'heartbeat' | 'issue_comment' | 'issue_created' | 'pull_request' | 'manual';
-  description: string;
-  data: any;
+  message: string;
+  issueNumber?: number;
+  isPR?: boolean;
 }
 
 /**
- * Parse the trigger that initiated this workflow
+ * Parse the GitHub event trigger into a message for OpenClaw
  */
 export async function parseTrigger(githubToken: string): Promise<TriggerContext> {
   const context = github.context;
   const octokit = github.getOctokit(githubToken);
   
-  core.info(`Event name: ${context.eventName}`);
-  core.info(`Action: ${context.payload.action}`);
+  core.info(`Event: ${context.eventName}, Action: ${context.payload.action}`);
   
-  // Heartbeat (scheduled cron)
+  // Schedule (heartbeat)
   if (context.eventName === 'schedule') {
     return {
       type: 'heartbeat',
-      description: 'Scheduled heartbeat check',
-      data: {
-        repository: context.payload.repository,
-        timestamp: new Date().toISOString()
-      }
+      message: 'Heartbeat check. Review the repo, look for issues to work on, update memory.'
     };
   }
   
@@ -36,48 +32,21 @@ export async function parseTrigger(githubToken: string): Promise<TriggerContext>
     
     return {
       type: 'issue_comment',
-      description: `Comment on ${issue.pull_request ? 'PR' : 'issue'} #${issue.number}`,
-      data: {
-        issue: {
-          number: issue.number,
-          title: issue.title,
-          body: issue.body,
-          isPR: !!issue.pull_request,
-          url: issue.html_url,
-          author: issue.user.login,
-          state: issue.state,
-          labels: issue.labels?.map((l: any) => l.name) || []
-        },
-        comment: {
-          id: comment.id,
-          body: comment.body,
-          author: comment.user.login,
-          created_at: comment.created_at,
-          url: comment.html_url
-        },
-        repository: context.payload.repository
-      }
+      message: `New comment on ${issue.pull_request ? 'PR' : 'issue'} #${issue.number} by @${comment.user.login}:\n\n${comment.body}\n\n---\n\nIssue title: ${issue.title}\nIssue URL: ${issue.html_url}`,
+      issueNumber: issue.number,
+      isPR: !!issue.pull_request
     };
   }
   
-  // New issue created
+  // Issue opened
   if (context.eventName === 'issues' && context.payload.action === 'opened') {
     const issue = context.payload.issue;
     
     return {
       type: 'issue_created',
-      description: `New issue #${issue.number}: ${issue.title}`,
-      data: {
-        issue: {
-          number: issue.number,
-          title: issue.title,
-          body: issue.body,
-          url: issue.html_url,
-          author: issue.user.login,
-          labels: issue.labels?.map((l: any) => l.name) || []
-        },
-        repository: context.payload.repository
-      }
+      message: `New issue #${issue.number} opened by @${issue.user.login}: ${issue.title}\n\n${issue.body || '(no description)'}\n\n---\n\nIssue URL: ${issue.html_url}`,
+      issueNumber: issue.number,
+      isPR: false
     };
   }
   
@@ -86,41 +55,28 @@ export async function parseTrigger(githubToken: string): Promise<TriggerContext>
       (context.payload.action === 'opened' || context.payload.action === 'synchronize')) {
     const pr = context.payload.pull_request;
     
-    // Fetch PR diff/patch
-    let diff = '';
+    // Fetch files changed
+    let filesChanged: string[] = [];
     try {
-      const { data: prData } = await octokit.rest.pulls.get({
+      const { data: files } = await octokit.rest.pulls.listFiles({
         owner: context.repo.owner,
         repo: context.repo.repo,
-        pull_number: pr.number,
-        mediaType: {
-          format: 'diff'
-        }
+        pull_number: pr.number
       });
-      diff = prData as any as string;
+      filesChanged = files.map(f => `${f.status}: ${f.filename} (+${f.additions}/-${f.deletions})`);
     } catch (error) {
-      core.warning(`Failed to fetch PR diff: ${error}`);
+      core.warning(`Failed to fetch PR files: ${error}`);
     }
+    
+    const diffSummary = filesChanged.length > 0 
+      ? `\n\nFiles changed:\n${filesChanged.slice(0, 20).join('\n')}${filesChanged.length > 20 ? `\n... and ${filesChanged.length - 20} more files` : ''}`
+      : '';
     
     return {
       type: 'pull_request',
-      description: `PR #${pr.number}: ${pr.title} (${context.payload.action})`,
-      data: {
-        pr: {
-          number: pr.number,
-          title: pr.title,
-          body: pr.body,
-          url: pr.html_url,
-          author: pr.user.login,
-          state: pr.state,
-          branch: pr.head.ref,
-          baseBranch: pr.base.ref,
-          labels: pr.labels?.map((l: any) => l.name) || [],
-          diff: diff.substring(0, 10000) // Limit diff size
-        },
-        action: context.payload.action,
-        repository: context.payload.repository
-      }
+      message: `PR #${pr.number} by @${pr.user.login}: ${pr.title}\n\n${pr.body || '(no description)'}${diffSummary}\n\n---\n\nPR URL: ${pr.html_url}\nBranch: ${pr.head.ref} → ${pr.base.ref}`,
+      issueNumber: pr.number,
+      isPR: true
     };
   }
   
@@ -128,22 +84,13 @@ export async function parseTrigger(githubToken: string): Promise<TriggerContext>
   if (context.eventName === 'workflow_dispatch') {
     return {
       type: 'manual',
-      description: 'Manual workflow trigger',
-      data: {
-        inputs: context.payload.inputs || {},
-        repository: context.payload.repository,
-        actor: context.actor
-      }
+      message: 'Manual trigger. Check for anything that needs attention.'
     };
   }
   
   // Unknown trigger
   return {
     type: 'manual',
-    description: `Unknown trigger: ${context.eventName}`,
-    data: {
-      eventName: context.eventName,
-      payload: context.payload
-    }
+    message: `Unknown trigger: ${context.eventName}. Please investigate.`
   };
 }

@@ -1,12 +1,21 @@
 name: 'OpenClaw Bot'
-description: 'AI-powered bot for your repo — heartbeats, mentions, issues, PRs'
+description: 'AI-powered bot for your repo — runs real OpenClaw, the same agent that powers WhatsApp/Discord bots'
+author: 'Offload My Work'
+branding:
+  icon: 'message-circle'
+  color: 'blue'
 inputs:
   anthropic_api_key:
-    description: 'Anthropic API key'
+    description: 'Anthropic API key for Claude'
     required: true
   model:
-    description: 'Model to use'
-    default: 'claude-sonnet-4-5-20250514'
+    description: 'Claude model to use'
+    default: 'claude-sonnet-4-20250514'
+    required: false
+  github_token:
+    description: 'GitHub token for API access'
+    default: ${{ github.token }}
+    required: false
 runs:
   using: 'node20'
   main: 'dist/index.js'

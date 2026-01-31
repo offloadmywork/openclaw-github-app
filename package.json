@@ -1,6 +1,6 @@
 {
   "name": "openclaw-github-app",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "scripts": {
     "build": "esbuild src/index.ts --bundle --platform=node --target=node20 --outfile=dist/index.js",
@@ -10,10 +10,11 @@
     "@actions/cache": "^4.0.0",
     "@actions/core": "^1.11.1",
     "@actions/github": "^6.0.0",
-    "@anthropic-ai/sdk": "^0.39.0"
+    "ws": "^8.18.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
+    "@types/ws": "^8.5.13",
     "esbuild": "^0.24.0",
     "typescript": "^5.7.0"
   }
