@@ -5,12 +5,16 @@ branding:
   icon: 'message-circle'
   color: 'blue'
 inputs:
-  anthropic_api_key:
-    description: 'Anthropic API key for Claude'
+  api_key:
+    description: 'LLM provider API key'
     required: true
+  provider:
+    description: 'Model provider (anthropic, xai, openai, google, groq, openrouter, etc.)'
+    default: 'anthropic'
+    required: false
   model:
-    description: 'Claude model to use'
-    default: 'claude-sonnet-4-20250514'
+    description: 'Model to use (provider/model format, e.g. xai/grok-3-fast)'
+    default: ''
     required: false
   github_token:
     description: 'GitHub token for API access'

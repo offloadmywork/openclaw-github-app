@@ -6,126 +6,98 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import { restoreWorkspace, saveWorkspace } from './workspace';
 import { parseTrigger } from './triggers';
-import { startGateway, waitForReady, stopGateway } from './gateway';
+import { startGateway, waitForReady, stopGateway, resolveModel } from './gateway';
 import { OpenClawClient } from './client';
 
 const execAsync = promisify(exec);
 
 async function run(): Promise<void> {
   let client: OpenClawClient | null = null;
-  
+
   try {
-    // Get inputs
-    const anthropicApiKey = core.getInput('anthropic_api_key', { required: true });
-    const model = core.getInput('model') || 'claude-sonnet-4-20250514';
+    // Get inputs — provider-agnostic
+    const apiKey = core.getInput('api_key', { required: true });
+    const provider = core.getInput('provider') || 'anthropic';
+    const model = core.getInput('model') || '';
     const githubToken = core.getInput('github_token') || process.env.GITHUB_TOKEN || '';
     const workspacePath = path.resolve('.openclaw');
-    
+
+    const resolvedModel = resolveModel(provider, model);
     core.info('=== OpenClaw GitHub Bot ===');
-    core.info(`Model: ${model}`);
+    core.info(`Provider: ${provider}`);
+    core.info(`Model: ${resolvedModel}`);
     core.info(`Workspace: ${workspacePath}`);
-    
+
     const context = github.context;
     const repo = `${context.repo.owner}/${context.repo.repo}`;
     const sha = context.sha;
-    
-    // Ensure workspace directory exists
-    if (!fs.existsSync(workspacePath)) {
-      fs.mkdirSync(workspacePath, { recursive: true });
-    }
-    
-    // Install OpenClaw globally
+
+    fs.mkdirSync(workspacePath, { recursive: true });
+
+    // Install OpenClaw
     core.info('Installing OpenClaw...');
     try {
       await execAsync('npm install -g openclaw', { timeout: 120000 });
       core.info('OpenClaw installed successfully');
     } catch (error) {
-      core.warning(`OpenClaw installation failed (may already be installed): ${error}`);
-      // Continue anyway - it might already be installed
+      core.warning(`OpenClaw install issue (may already exist): ${error}`);
     }
-    
-    // Verify OpenClaw is available
+
     try {
       const { stdout } = await execAsync('openclaw --version');
       core.info(`OpenClaw version: ${stdout.trim()}`);
-    } catch (error) {
+    } catch {
       throw new Error('OpenClaw is not available. Installation may have failed.');
     }
-    
+
     // Restore workspace from cache
     await restoreWorkspace(workspacePath, repo, sha);
-    core.info('Workspace restored from cache');
-    
+
     // Start Gateway
-    await startGateway({
-      anthropicApiKey,
-      model,
-      workspacePath
-    });
-    
-    // Wait for Gateway to be ready
+    await startGateway({ provider, apiKey, model, workspacePath });
     await waitForReady();
-    
+
     // Parse trigger
     const trigger = await parseTrigger(githubToken);
     core.info(`Trigger: ${trigger.type}`);
     core.info(`Message: ${trigger.message.substring(0, 200)}...`);
-    
-    // Connect to Gateway
+
+    // Connect and send message
     client = new OpenClawClient();
     await client.connect();
-    
-    // Send message and wait for response
     const response = await client.sendMessage(trigger.message);
-    
-    core.info('Agent response received');
-    core.info(`Response length: ${response.length} chars`);
-    
-    // Disconnect client
+    core.info(`Response: ${response.length} chars`);
     client.disconnect();
     client = null;
-    
-    // Post response to GitHub if appropriate
+
+    // Post response to GitHub
     if (trigger.issueNumber && !response.includes('HEARTBEAT_OK')) {
       const octokit = github.getOctokit(githubToken);
-      
       try {
-        core.info(`Posting response to #${trigger.issueNumber}`);
         await octokit.rest.issues.createComment({
           owner: context.repo.owner,
           repo: context.repo.repo,
           issue_number: trigger.issueNumber,
           body: response
         });
-        core.info('Response posted successfully');
+        core.info(`Posted to #${trigger.issueNumber}`);
       } catch (error) {
-        core.error(`Failed to post response: ${error}`);
+        core.error(`Failed to post: ${error}`);
       }
     } else if (response.includes('HEARTBEAT_OK')) {
-      core.info('Heartbeat OK - no action needed');
-    }
-    
-    // Stop Gateway
-    await stopGateway();
-    
-    // Save workspace to cache
-    await saveWorkspace(workspacePath, repo, sha);
-    core.info('Workspace saved to cache');
-    
-    core.info('=== OpenClaw complete ===');
-    
-  } catch (error) {
-    if (client) {
-      client.disconnect();
-    }
-    
-    await stopGateway().catch(() => {});
-    
-    if (error instanceof Error) {
-      core.setFailed(error.message);
+      core.info('Heartbeat OK — no action needed');
     } else {
-      core.setFailed('An unknown error occurred');
+      core.info('No issue/PR to post to — response logged above');
     }
+
+    await stopGateway();
+    await saveWorkspace(workspacePath, repo, sha);
+    core.info('=== OpenClaw complete ===');
+
+  } catch (error) {
+    if (client) client.disconnect();
+    await stopGateway().catch(() => {});
+    core.setFailed(error instanceof Error ? error.message : 'Unknown error');
   }
 }
 
