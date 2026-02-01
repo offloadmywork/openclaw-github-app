@@ -36,10 +36,11 @@ async function run(): Promise<void> {
     // Install OpenClaw
     core.info('Installing OpenClaw...');
     try {
-      await execAsync('npm install -g openclaw', { timeout: 120000 });
-      core.info('OpenClaw installed successfully');
+      const { stdout: installOut, stderr: installErr } = await execAsync('npm install -g openclaw@latest --force 2>&1', { timeout: 120000 });
+      core.info(`Install output: ${installOut.trim()}`);
+      if (installErr) core.info(`Install stderr: ${installErr.trim()}`);
     } catch (error) {
-      core.warning(`OpenClaw install issue (may already exist): ${error}`);
+      core.warning(`OpenClaw install issue: ${error}`);
     }
 
     // Fix PATH — npm global bin may not be in PATH on GitHub Actions

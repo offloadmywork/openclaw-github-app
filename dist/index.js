@@ -76380,10 +76380,11 @@ async function run() {
     fs3.mkdirSync(workspacePath, { recursive: true });
     core5.info("Installing OpenClaw...");
     try {
-      await execAsync("npm install -g openclaw", { timeout: 12e4 });
-      core5.info("OpenClaw installed successfully");
+      const { stdout: installOut, stderr: installErr } = await execAsync("npm install -g openclaw@latest --force 2>&1", { timeout: 12e4 });
+      core5.info(`Install output: ${installOut.trim()}`);
+      if (installErr) core5.info(`Install stderr: ${installErr.trim()}`);
     } catch (error4) {
-      core5.warning(`OpenClaw install issue (may already exist): ${error4}`);
+      core5.warning(`OpenClaw install issue: ${error4}`);
     }
     try {
       const { stdout: npmPrefix } = await execAsync("npm config get prefix");
