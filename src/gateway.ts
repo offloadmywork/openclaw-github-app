@@ -71,7 +71,7 @@ export async function startGateway(config: GatewayConfig): Promise<void> {
     providersConfig[config.provider] = {
       api: 'openai-responses',
       baseUrl,
-      models: [{ id: resolvedModel.replace(`${config.provider}/`, ''), contextWindow: 131072, maxTokens: 32768 }]
+      models: [{ id: resolvedModel.replace(`${config.provider}/`, ''), name: resolvedModel.replace(`${config.provider}/`, ''), contextWindow: 131072, maxTokens: 32768 }]
     };
   }
 
