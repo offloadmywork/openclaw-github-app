@@ -121,10 +121,12 @@ export class OpenClawClient {
   private pendingRequests = new Map<string, {
     resolve: (value: any) => void;
     reject: (error: Error) => void;
+    keepAlive?: boolean; // If true, don't remove from map after first response
   }>();
   private streamBuffer: string[] = [];
   private lifecycleEndPromise: Promise<void> | null = null;
   private lifecycleEndResolve: (() => void) | null = null;
+  private agentCompletionResolve: ((text: string) => void) | null = null;
   private connectResolve: (() => void) | null = null;
   private connectReject: ((error: Error) => void) | null = null;
   private connectRequestId: string | null = null;
@@ -194,7 +196,14 @@ export class OpenClawClient {
   }
 
   /**
-   * Send a message to the agent and wait for response
+   * Send a message to the agent and wait for response.
+   *
+   * The Gateway sends TWO RPC responses on the same request ID:
+   *   1st – {status:"accepted", runId, acceptedAt}   (ack)
+   *   2nd – {status:"ok", summary:"completed", result:{payloads:[{text}]}}  (done)
+   *
+   * We listen for the second response to extract the full reply text.
+   * The lifecycle 'end' event and stream buffer serve as fallbacks.
    */
   async sendMessage(text: string, sessionKey: string = 'github-action'): Promise<string> {
     if (!this.ws) {
@@ -203,32 +212,74 @@ export class OpenClawClient {
     
     core.info(`Sending message to agent (${text.length} chars)...`);
     
-    // Set up lifecycle end listener
+    // Set up lifecycle end listener (fallback)
     this.lifecycleEndPromise = new Promise((resolve) => {
       this.lifecycleEndResolve = resolve;
     });
     
     this.streamBuffer = [];
     
-    // Send agent request
-    const response = await this.request('agent', {
-      message: text,
-      sessionKey,
-      idempotencyKey: `gh-${Date.now()}-${crypto.randomBytes(8).toString('hex')}`
+    // Set up agent completion promise (resolves when 2nd RPC response arrives)
+    const agentCompletionPromise = new Promise<string>((resolve) => {
+      this.agentCompletionResolve = resolve;
     });
     
-    core.info('Agent request accepted, waiting for lifecycle end...');
+    // Manually send the agent request (don't use this.request() which
+    // removes the pending entry after the first response)
+    const id = this.nextId();
+    const request: RPCRequest = {
+      type: 'req',
+      id,
+      method: 'agent',
+      params: {
+        message: text,
+        sessionKey,
+        idempotencyKey: `gh-${Date.now()}-${crypto.randomBytes(8).toString('hex')}`
+      }
+    };
     
-    // Wait for lifecycle to complete (with timeout — 5 min for LLM processing)
-    const timeoutPromise = new Promise<void>((_, reject) => 
+    // Register a keepAlive pending request – handleResponse will NOT remove it
+    // after the first "accepted" ack; it stays until the completion response.
+    const acceptedPromise = new Promise<any>((resolve, reject) => {
+      this.pendingRequests.set(id, { resolve, reject, keepAlive: true });
+      
+      // Hard timeout – if nothing comes back in 5 min, fail
+      setTimeout(() => {
+        if (this.pendingRequests.has(id)) {
+          this.pendingRequests.delete(id);
+          reject(new Error('Agent request timeout after 300s'));
+        }
+      }, 300000);
+    });
+    
+    this.send(request);
+    
+    // Wait for the initial "accepted" ack (first RPC response)
+    const acceptPayload = await acceptedPromise;
+    core.info(`Agent request accepted (runId=${acceptPayload?.runId ?? 'unknown'}), waiting for completion...`);
+    
+    // Now race: 2nd RPC response  vs  lifecycle end event  vs  timeout
+    const timeoutPromise = new Promise<string>((_, reject) =>
       setTimeout(() => reject(new Error('Agent lifecycle timeout after 300s')), 300000)
     );
-    await Promise.race([this.lifecycleEndPromise, timeoutPromise]);
+    const lifecycleFallback = this.lifecycleEndPromise.then(() => {
+      // If lifecycle fires but we didn't get a 2nd RPC response, use stream buffer
+      const streamed = this.streamBuffer.join('');
+      return streamed || '(no response text captured)';
+    });
     
-    const fullResponse = this.streamBuffer.join('');
-    core.info(`Agent response complete (${fullResponse.length} chars)`);
+    const responseText = await Promise.race([
+      agentCompletionPromise,
+      lifecycleFallback,
+      timeoutPromise,
+    ]);
     
-    return fullResponse;
+    // Clean up: remove pending request if still there
+    this.pendingRequests.delete(id);
+    this.agentCompletionResolve = null;
+    
+    core.info(`Agent response complete (${responseText.length} chars)`);
+    return responseText;
   }
 
   /**
@@ -325,16 +376,65 @@ export class OpenClawClient {
     
     const pending = this.pendingRequests.get(response.id);
     if (pending) {
-      this.pendingRequests.delete(response.id);
-      
-      if (response.ok) {
-        pending.resolve(response.payload);
-      } else {
+      if (!response.ok) {
+        // Error response – always resolve immediately (remove from map)
+        this.pendingRequests.delete(response.id);
         const msg = response.error
           ? (typeof response.error === 'object' ? response.error.message : String(response.error))
           : 'Request failed';
         pending.reject(new Error(msg));
+        return;
       }
+      
+      const payload = response.payload ?? {};
+      
+      // Dual-response pattern (keepAlive requests like 'agent'):
+      //   1st response: status="accepted" → resolve the accepted promise, keep listening
+      //   2nd response: status="ok" / summary="completed" → extract text, fire completion
+      if (pending.keepAlive) {
+        if (payload.status === 'accepted') {
+          // First response – ack. Resolve the accepted promise but keep listening.
+          // We swap the resolver out so the *next* response on this id
+          // won't double-resolve the same promise.
+          pending.resolve(payload);
+          // Replace resolve/reject with no-ops; the completion will go via agentCompletionResolve
+          pending.resolve = () => {};
+          pending.reject = () => {};
+          return; // keep in pendingRequests
+        }
+        
+        // Second (or later) response – completion
+        this.pendingRequests.delete(response.id);
+        
+        // Extract response text from result.payloads[].text
+        let resultText = '';
+        if (payload.result?.payloads && Array.isArray(payload.result.payloads)) {
+          resultText = payload.result.payloads
+            .map((p: any) => p.text ?? '')
+            .filter(Boolean)
+            .join('\n');
+        }
+        if (!resultText && payload.summary) {
+          resultText = payload.summary;
+        }
+        if (!resultText && payload.error) {
+          resultText = typeof payload.error === 'string' ? payload.error : JSON.stringify(payload.error);
+        }
+        
+        core.info(`Agent completion received (${resultText.length} chars text)`);
+        
+        if (this.agentCompletionResolve) {
+          // Prefer streamed content if we collected any, since it may be richer
+          const streamed = this.streamBuffer.join('');
+          this.agentCompletionResolve(streamed || resultText || '(empty response)');
+          this.agentCompletionResolve = null;
+        }
+        return;
+      }
+      
+      // Normal (non-keepAlive) request – resolve immediately
+      this.pendingRequests.delete(response.id);
+      pending.resolve(payload);
     }
   }
 

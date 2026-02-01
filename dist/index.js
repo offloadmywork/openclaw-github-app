@@ -76274,6 +76274,7 @@ var OpenClawClient = class {
   streamBuffer = [];
   lifecycleEndPromise = null;
   lifecycleEndResolve = null;
+  agentCompletionResolve = null;
   connectResolve = null;
   connectReject = null;
   connectRequestId = null;
@@ -76335,7 +76336,14 @@ var OpenClawClient = class {
     });
   }
   /**
-   * Send a message to the agent and wait for response
+   * Send a message to the agent and wait for response.
+   *
+   * The Gateway sends TWO RPC responses on the same request ID:
+   *   1st – {status:"accepted", runId, acceptedAt}   (ack)
+   *   2nd – {status:"ok", summary:"completed", result:{payloads:[{text}]}}  (done)
+   *
+   * We listen for the second response to extract the full reply text.
+   * The lifecycle 'end' event and stream buffer serve as fallbacks.
    */
   async sendMessage(text, sessionKey = "github-action") {
     if (!this.ws) {
@@ -76346,19 +76354,48 @@ var OpenClawClient = class {
       this.lifecycleEndResolve = resolve2;
     });
     this.streamBuffer = [];
-    const response = await this.request("agent", {
-      message: text,
-      sessionKey,
-      idempotencyKey: `gh-${Date.now()}-${crypto2.randomBytes(8).toString("hex")}`
+    const agentCompletionPromise = new Promise((resolve2) => {
+      this.agentCompletionResolve = resolve2;
     });
-    core4.info("Agent request accepted, waiting for lifecycle end...");
+    const id = this.nextId();
+    const request = {
+      type: "req",
+      id,
+      method: "agent",
+      params: {
+        message: text,
+        sessionKey,
+        idempotencyKey: `gh-${Date.now()}-${crypto2.randomBytes(8).toString("hex")}`
+      }
+    };
+    const acceptedPromise = new Promise((resolve2, reject) => {
+      this.pendingRequests.set(id, { resolve: resolve2, reject, keepAlive: true });
+      setTimeout(() => {
+        if (this.pendingRequests.has(id)) {
+          this.pendingRequests.delete(id);
+          reject(new Error("Agent request timeout after 300s"));
+        }
+      }, 3e5);
+    });
+    this.send(request);
+    const acceptPayload = await acceptedPromise;
+    core4.info(`Agent request accepted (runId=${acceptPayload?.runId ?? "unknown"}), waiting for completion...`);
     const timeoutPromise = new Promise(
       (_, reject) => setTimeout(() => reject(new Error("Agent lifecycle timeout after 300s")), 3e5)
     );
-    await Promise.race([this.lifecycleEndPromise, timeoutPromise]);
-    const fullResponse = this.streamBuffer.join("");
-    core4.info(`Agent response complete (${fullResponse.length} chars)`);
-    return fullResponse;
+    const lifecycleFallback = this.lifecycleEndPromise.then(() => {
+      const streamed = this.streamBuffer.join("");
+      return streamed || "(no response text captured)";
+    });
+    const responseText = await Promise.race([
+      agentCompletionPromise,
+      lifecycleFallback,
+      timeoutPromise
+    ]);
+    this.pendingRequests.delete(id);
+    this.agentCompletionResolve = null;
+    core4.info(`Agent response complete (${responseText.length} chars)`);
+    return responseText;
   }
   /**
    * Disconnect from the Gateway
@@ -76439,13 +76476,43 @@ var OpenClawClient = class {
     }
     const pending = this.pendingRequests.get(response.id);
     if (pending) {
-      this.pendingRequests.delete(response.id);
-      if (response.ok) {
-        pending.resolve(response.payload);
-      } else {
+      if (!response.ok) {
+        this.pendingRequests.delete(response.id);
         const msg = response.error ? typeof response.error === "object" ? response.error.message : String(response.error) : "Request failed";
         pending.reject(new Error(msg));
+        return;
       }
+      const payload = response.payload ?? {};
+      if (pending.keepAlive) {
+        if (payload.status === "accepted") {
+          pending.resolve(payload);
+          pending.resolve = () => {
+          };
+          pending.reject = () => {
+          };
+          return;
+        }
+        this.pendingRequests.delete(response.id);
+        let resultText = "";
+        if (payload.result?.payloads && Array.isArray(payload.result.payloads)) {
+          resultText = payload.result.payloads.map((p) => p.text ?? "").filter(Boolean).join("\n");
+        }
+        if (!resultText && payload.summary) {
+          resultText = payload.summary;
+        }
+        if (!resultText && payload.error) {
+          resultText = typeof payload.error === "string" ? payload.error : JSON.stringify(payload.error);
+        }
+        core4.info(`Agent completion received (${resultText.length} chars text)`);
+        if (this.agentCompletionResolve) {
+          const streamed = this.streamBuffer.join("");
+          this.agentCompletionResolve(streamed || resultText || "(empty response)");
+          this.agentCompletionResolve = null;
+        }
+        return;
+      }
+      this.pendingRequests.delete(response.id);
+      pending.resolve(payload);
     }
   }
   /**
