@@ -38,16 +38,32 @@ export class OpenClawClient {
   private lifecycleEndResolve: (() => void) | null = null;
   private connectResolve: (() => void) | null = null;
   private connectReject: ((error: Error) => void) | null = null;
+  private connectRequestId: string | null = null;
 
   /**
-   * Connect to the OpenClaw Gateway
+   * Connect to the OpenClaw Gateway (with timeout)
    */
-  async connect(): Promise<void> {
+  async connect(timeoutMs: number = 30000): Promise<void> {
     core.info('Connecting to OpenClaw Gateway...');
     
     return new Promise((resolve, reject) => {
       this.connectResolve = resolve;
       this.connectReject = reject;
+      
+      // Timeout the entire connect handshake
+      const connectTimeout = setTimeout(() => {
+        if (this.connectReject) {
+          this.connectReject(new Error(`Connect handshake timeout after ${timeoutMs}ms`));
+          this.connectReject = null;
+          this.connectResolve = null;
+        }
+      }, timeoutMs);
+      
+      // Wrap resolve/reject to clear timeout
+      const origResolve = resolve;
+      const origReject = reject;
+      this.connectResolve = () => { clearTimeout(connectTimeout); origResolve(); };
+      this.connectReject = (err: Error) => { clearTimeout(connectTimeout); origReject(err); };
       
       const token = (globalThis as any).__openclawGatewayToken || '';
       const wsUrl = token ? `ws://localhost:18789?token=${token}` : 'ws://localhost:18789';
@@ -60,7 +76,7 @@ export class OpenClawClient {
       this.ws.on('error', (error) => {
         core.error(`WebSocket error: ${error}`);
         if (this.connectReject) {
-          this.connectReject(error);
+          this.connectReject(error instanceof Error ? error : new Error(String(error)));
           this.connectReject = null;
           this.connectResolve = null;
         }
@@ -70,8 +86,13 @@ export class OpenClawClient {
         this.handleMessage(data.toString());
       });
       
-      this.ws.on('close', () => {
-        core.info('WebSocket closed');
+      this.ws.on('close', (code, reason) => {
+        core.info(`WebSocket closed (code=${code}, reason=${reason || 'none'})`);
+        if (this.connectReject) {
+          this.connectReject(new Error(`WebSocket closed during handshake (code=${code})`));
+          this.connectReject = null;
+          this.connectResolve = null;
+        }
       });
     });
   }
@@ -101,9 +122,9 @@ export class OpenClawClient {
     
     core.info('Agent request accepted, waiting for lifecycle end...');
     
-    // Wait for lifecycle to complete (with timeout)
+    // Wait for lifecycle to complete (with timeout — 5 min for LLM processing)
     const timeoutPromise = new Promise<void>((_, reject) => 
-      setTimeout(() => reject(new Error('Agent lifecycle timeout after 120s')), 120000)
+      setTimeout(() => reject(new Error('Agent lifecycle timeout after 300s')), 300000)
     );
     await Promise.race([this.lifecycleEndPromise, timeoutPromise]);
     
@@ -159,6 +180,7 @@ export class OpenClawClient {
   private handleMessage(data: string): void {
     try {
       const message: Message = JSON.parse(data);
+      core.debug(`WS recv: ${JSON.stringify(message).substring(0, 500)}`);
       
       if (message.type === 'res') {
         this.handleResponse(message);
@@ -174,13 +196,26 @@ export class OpenClawClient {
    * Handle RPC response
    */
   private handleResponse(response: RPCResponse): void {
-    // Handle hello-ok from connect handshake
-    if (response.ok && response.payload?.type === 'hello-ok') {
-      core.info(`Connected! Protocol version: ${response.payload.protocol}`);
-      if (this.connectResolve) {
-        this.connectResolve();
-        this.connectResolve = null;
-        this.connectReject = null;
+    core.info(`RPC response: id=${response.id} ok=${response.ok} payload=${JSON.stringify(response.payload || response.error || '').substring(0, 200)}`);
+    
+    // Handle connect handshake response (hello-ok or rejection)
+    if (this.connectRequestId && response.id === this.connectRequestId) {
+      this.connectRequestId = null;
+      if (response.ok && response.payload?.type === 'hello-ok') {
+        core.info(`Connected! Protocol version: ${response.payload.protocol}`);
+        if (this.connectResolve) {
+          this.connectResolve();
+          this.connectResolve = null;
+          this.connectReject = null;
+        }
+      } else {
+        const err = new Error(`Connect rejected: ${response.error || JSON.stringify(response.payload)}`);
+        core.error(err.message);
+        if (this.connectReject) {
+          this.connectReject(err);
+          this.connectReject = null;
+          this.connectResolve = null;
+        }
       }
       return;
     }
@@ -203,12 +238,15 @@ export class OpenClawClient {
   private handleEvent(event: StreamEvent): void {
     // Handle connect.challenge from gateway
     if (event.event === 'connect.challenge') {
-      core.info('Received connect.challenge, sending connect request...');
+      core.info(`Received connect.challenge (nonce=${event.payload?.nonce?.substring(0, 8)}...), sending connect request...`);
       const token = (globalThis as any).__openclawGatewayToken || '';
       
+      const connectId = this.nextId();
+      this.connectRequestId = connectId;
+      
       const connectRequest = {
-        type: 'req',
-        id: this.nextId(),
+        type: 'req' as const,
+        id: connectId,
         method: 'connect',
         params: {
           minProtocol: 3,
@@ -223,12 +261,17 @@ export class OpenClawClient {
           scopes: ['operator.read', 'operator.write'],
           caps: [],
           commands: [],
+          permissions: {},
           auth: {
             token: token
+          },
+          device: {
+            id: `github-action-${require('crypto').randomBytes(8).toString('hex')}`
           }
         }
       };
       
+      core.info(`Sending connect request (id=${connectId})...`);
       this.send(connectRequest);
       return;
     }
