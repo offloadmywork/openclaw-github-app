@@ -76133,7 +76133,7 @@ async function startGateway(config) {
     [envKey]: config.apiKey
   };
   return new Promise((resolve2, reject) => {
-    gatewayProcess = (0, import_child_process.spawn)("openclaw", ["gateway"], {
+    gatewayProcess = (0, import_child_process.spawn)("openclaw", ["gateway", "--allow-unconfigured"], {
       cwd: config.workspacePath,
       env,
       stdio: ["ignore", "pipe", "pipe"]

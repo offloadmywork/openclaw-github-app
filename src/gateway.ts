@@ -76,7 +76,7 @@ export async function startGateway(config: GatewayConfig): Promise<void> {
   };
 
   return new Promise((resolve, reject) => {
-    gatewayProcess = spawn('openclaw', ['gateway'], {
+    gatewayProcess = spawn('openclaw', ['gateway', '--allow-unconfigured'], {
       cwd: config.workspacePath,
       env,
       stdio: ['ignore', 'pipe', 'pipe']
