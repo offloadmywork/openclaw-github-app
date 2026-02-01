@@ -76127,7 +76127,7 @@ async function startGateway(config) {
   const baseUrl = PROVIDER_BASE_URLS[config.provider];
   if (baseUrl) {
     providersConfig[config.provider] = {
-      api: "openai-chat",
+      api: "openai-responses",
       baseUrl,
       models: [{ id: resolvedModel.replace(`${config.provider}/`, ""), contextWindow: 131072, maxTokens: 32768 }]
     };
