@@ -13,7 +13,7 @@ export interface Workspace {
 /**
  * Restore workspace from GitHub Actions cache
  */
-export async function restoreWorkspace(workspacePath: string, repo: string, sha: string): Promise<Workspace> {
+export async function restoreWorkspace(workspacePath: string, repo: string): Promise<Workspace> {
   core.info(`Restoring workspace from cache...`);
   
   // Ensure workspace directory exists
@@ -21,10 +21,10 @@ export async function restoreWorkspace(workspacePath: string, repo: string, sha:
     fs.mkdirSync(workspacePath, { recursive: true });
   }
   
-  const cacheKey = `openclaw-workspace-${repo}-${sha}`;
+  const branch = process.env.GITHUB_REF_NAME || 'main';
+  const cacheKey = `openclaw-workspace-${repo}-${branch}`;
   const restoreKeys = [
-    `openclaw-workspace-${repo}-`,
-    `openclaw-workspace-`
+    `openclaw-workspace-${repo}-`
   ];
   
   try {
@@ -119,10 +119,11 @@ function loadWorkspace(workspacePath: string): Workspace {
 /**
  * Save workspace back to cache
  */
-export async function saveWorkspace(workspacePath: string, repo: string, sha: string): Promise<void> {
+export async function saveWorkspace(workspacePath: string, repo: string): Promise<void> {
   core.info(`Saving workspace to cache...`);
   
-  const cacheKey = `openclaw-workspace-${repo}-${sha}`;
+  const branch = process.env.GITHUB_REF_NAME || 'main';
+  const cacheKey = `openclaw-workspace-${repo}-${branch}`;
   
   try {
     await cache.saveCache([workspacePath], cacheKey);

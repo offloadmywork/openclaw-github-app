@@ -30,7 +30,6 @@ async function run(): Promise<void> {
 
     const context = github.context;
     const repo = `${context.repo.owner}/${context.repo.repo}`;
-    const sha = context.sha;
 
     fs.mkdirSync(workspacePath, { recursive: true });
 
@@ -51,7 +50,7 @@ async function run(): Promise<void> {
     }
 
     // Restore workspace from cache
-    await restoreWorkspace(workspacePath, repo, sha);
+    await restoreWorkspace(workspacePath, repo);
 
     // Start Gateway
     await startGateway({ provider, apiKey, model, workspacePath });
@@ -91,7 +90,7 @@ async function run(): Promise<void> {
     }
 
     await stopGateway();
-    await saveWorkspace(workspacePath, repo, sha);
+    await saveWorkspace(workspacePath, repo);
     core.info('=== OpenClaw complete ===');
 
   } catch (error) {

@@ -75900,15 +75900,15 @@ var core = __toESM(require_core());
 var cache = __toESM(require_cache4());
 var fs = __toESM(require("fs"));
 var path = __toESM(require("path"));
-async function restoreWorkspace(workspacePath, repo, sha) {
+async function restoreWorkspace(workspacePath, repo) {
   core.info(`Restoring workspace from cache...`);
   if (!fs.existsSync(workspacePath)) {
     fs.mkdirSync(workspacePath, { recursive: true });
   }
-  const cacheKey = `openclaw-workspace-${repo}-${sha}`;
+  const branch = process.env.GITHUB_REF_NAME || "main";
+  const cacheKey = `openclaw-workspace-${repo}-${branch}`;
   const restoreKeys = [
-    `openclaw-workspace-${repo}-`,
-    `openclaw-workspace-`
+    `openclaw-workspace-${repo}-`
   ];
   try {
     const cacheHit = await cache.restoreCache([workspacePath], cacheKey, restoreKeys);
@@ -75978,9 +75978,10 @@ function loadWorkspace(workspacePath) {
   }
   return workspace;
 }
-async function saveWorkspace(workspacePath, repo, sha) {
+async function saveWorkspace(workspacePath, repo) {
   core.info(`Saving workspace to cache...`);
-  const cacheKey = `openclaw-workspace-${repo}-${sha}`;
+  const branch = process.env.GITHUB_REF_NAME || "main";
+  const cacheKey = `openclaw-workspace-${repo}-${branch}`;
   try {
     await cache.saveCache([workspacePath], cacheKey);
     core.info(`Workspace cached with key: ${cacheKey}`);
@@ -76141,7 +76142,7 @@ async function startGateway(config) {
       core3.info(`[Gateway] ${data.toString().trim()}`);
     });
     gatewayProcess.stderr?.on("data", (data) => {
-      core3.info(`[Gateway] ${data.toString().trim()}`);
+      core3.error(`[Gateway] ${data.toString().trim()}`);
     });
     gatewayProcess.on("error", (error4) => {
       core3.error(`Gateway process error: ${error4}`);
@@ -76258,7 +76259,10 @@ var OpenClawClient = class {
       sessionKey
     });
     core4.info("Agent request accepted, waiting for lifecycle end...");
-    await this.lifecycleEndPromise;
+    const timeoutPromise = new Promise(
+      (_, reject) => setTimeout(() => reject(new Error("Agent lifecycle timeout after 120s")), 12e4)
+    );
+    await Promise.race([this.lifecycleEndPromise, timeoutPromise]);
     const fullResponse = this.streamBuffer.join("");
     core4.info(`Agent response complete (${fullResponse.length} chars)`);
     return fullResponse;
@@ -76373,7 +76377,6 @@ async function run() {
     core5.info(`Workspace: ${workspacePath}`);
     const context3 = github2.context;
     const repo = `${context3.repo.owner}/${context3.repo.repo}`;
-    const sha = context3.sha;
     fs3.mkdirSync(workspacePath, { recursive: true });
     core5.info("Installing OpenClaw...");
     try {
@@ -76388,7 +76391,7 @@ async function run() {
     } catch {
       throw new Error("OpenClaw is not available. Installation may have failed.");
     }
-    await restoreWorkspace(workspacePath, repo, sha);
+    await restoreWorkspace(workspacePath, repo);
     await startGateway({ provider, apiKey, model, workspacePath });
     await waitForReady();
     const trigger = await parseTrigger(githubToken);
@@ -76419,7 +76422,7 @@ async function run() {
       core5.info("No issue/PR to post to \u2014 response logged above");
     }
     await stopGateway();
-    await saveWorkspace(workspacePath, repo, sha);
+    await saveWorkspace(workspacePath, repo);
     core5.info("=== OpenClaw complete ===");
   } catch (error4) {
     if (client) client.disconnect();

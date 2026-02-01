@@ -87,7 +87,7 @@ export async function startGateway(config: GatewayConfig): Promise<void> {
     });
 
     gatewayProcess.stderr?.on('data', (data) => {
-      core.info(`[Gateway] ${data.toString().trim()}`);
+      core.error(`[Gateway] ${data.toString().trim()}`);
     });
 
     gatewayProcess.on('error', (error) => {

@@ -14,9 +14,12 @@ This GitHub Action brings OpenClaw to your repository. Instead of being a standa
 
 **Why this matters:** You get the full power of OpenClaw — the same reasoning, memory system, and capabilities — now available in your GitHub workflows.
 
+**Provider-agnostic:** Works with Anthropic, xAI, OpenAI, Google, Groq, OpenRouter, Cerebras, and Mistral.
+
 ## Features
 
 - 🤖 **Real OpenClaw** — same agent, same capabilities
+- 🔌 **Multi-provider** — use Anthropic, xAI, OpenAI, Google, or others
 - 💭 **Persistent memory** — maintains context across runs via GitHub Actions Cache
 - 🔄 **Heartbeat checks** — periodic reviews of your repo
 - 💬 **Issue/PR responses** — intelligent comments on issues and pull requests
@@ -31,25 +34,39 @@ name: OpenClaw Bot
 
 on:
   issues:
-    types: [opened]
+    types: [opened, edited]
   issue_comment:
     types: [created]
   pull_request:
-    types: [opened, synchronize]
+    types: [opened, synchronize, reopened]
+  pull_request_review_comment:
+    types: [created]
   schedule:
     - cron: '0 */6 * * *'  # Every 6 hours
   workflow_dispatch:
+    inputs:
+      message:
+        description: 'Custom message to send to the agent'
+        required: false
+        default: 'Manual trigger - review the repo'
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
 
 jobs:
   openclaw:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       
       - uses: offloadmywork/openclaw-github-app@main
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          model: claude-sonnet-4-20250514
+          api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          provider: 'anthropic'
+          model: 'claude-sonnet-4-5'
           github_token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
@@ -59,17 +76,66 @@ jobs:
 
 | Input | Description | Required | Default |
 |-------|-------------|----------|---------|
-| `anthropic_api_key` | Your Anthropic API key | Yes | - |
-| `model` | Claude model to use | No | `claude-sonnet-4-20250514` |
+| `api_key` | API key for your chosen provider | Yes | - |
+| `provider` | AI provider (anthropic, xai, openai, google, groq, etc.) | No | `anthropic` |
+| `model` | Model to use (e.g., claude-sonnet-4-5, grok-3-fast) | No | Provider default |
 | `github_token` | GitHub token for API access | No | `${{ github.token }}` |
+
+### Providers & Models
+
+| Provider | Example Models | Secret Name |
+|----------|----------------|-------------|
+| `anthropic` | `claude-sonnet-4-5`, `claude-opus-4-5` | `ANTHROPIC_API_KEY` |
+| `xai` | `grok-3-fast`, `grok-3-medium` | `XAI_API_KEY` |
+| `openai` | `gpt-4.1-mini`, `gpt-4.1` | `OPENAI_API_KEY` |
+| `google` | `gemini-2.5-flash`, `gemini-2.5-pro` | `GEMINI_API_KEY` |
+| `groq` | `llama-3.3-70b-versatile` | `GROQ_API_KEY` |
+| `openrouter` | `anthropic/claude-sonnet-4-5` | `OPENROUTER_API_KEY` |
+
+**Note:** Model names can include or omit the provider prefix. For example, both `claude-sonnet-4-5` and `anthropic/claude-sonnet-4-5` work.
 
 ### Secrets
 
-Add your Anthropic API key to repository secrets:
+Add your API key to repository secrets:
 1. Go to Settings → Secrets and variables → Actions
 2. Click "New repository secret"
-3. Name: `ANTHROPIC_API_KEY`
-4. Value: Your API key from https://console.anthropic.com/
+3. Name: `ANTHROPIC_API_KEY` (or your provider's key name)
+4. Value: Your API key
+
+## Examples
+
+### Using xAI (Grok)
+
+```yaml
+- uses: offloadmywork/openclaw-github-app@main
+  with:
+    api_key: ${{ secrets.XAI_API_KEY }}
+    provider: 'xai'
+    model: 'grok-3-fast'
+    github_token: ${{ secrets.GITHUB_TOKEN }}
+```
+
+### Using OpenAI
+
+```yaml
+- uses: offloadmywork/openclaw-github-app@main
+  with:
+    api_key: ${{ secrets.OPENAI_API_KEY }}
+    provider: 'openai'
+    model: 'gpt-4.1-mini'
+    github_token: ${{ secrets.GITHUB_TOKEN }}
+```
+
+### Using Google Gemini
+
+```yaml
+- uses: offloadmywork/openclaw-github-app@main
+  with:
+    api_key: ${{ secrets.GEMINI_API_KEY }}
+    provider: 'google'
+    model: 'gemini-2.5-flash'
+    github_token: ${{ secrets.GITHUB_TOKEN }}
+```
 
 ## How It Works
 
@@ -102,7 +168,9 @@ OpenClaw maintains a workspace in `.openclaw/` with:
 - `MEMORY.md` — curated long-term memory
 - `memory/YYYY-MM-DD.md` — daily logs
 
-This workspace is cached between runs using GitHub Actions Cache, giving the bot continuity and context.
+This workspace is **cached per branch** using GitHub Actions Cache, giving the bot continuity and context across runs on the same branch.
+
+**Important:** Cache is branch-specific. Each branch has its own memory, so the bot doesn't get confused by branch-specific work.
 
 ### Triggers
 
@@ -110,8 +178,9 @@ The bot responds to:
 
 - **Schedule** → Heartbeat check (reviews repo, looks for work)
 - **Issue comment** → Responds to comments
-- **Issue opened** → Welcomes and provides guidance
+- **Issue opened/edited** → Welcomes and provides guidance
 - **Pull request** → Reviews and provides feedback
+- **PR review comments** → Participates in code reviews
 - **Manual** → Workflow dispatch for manual triggers
 
 ## Customization
@@ -166,10 +235,23 @@ The bot automatically maintains:
 
 You can review and curate these files to guide the bot's understanding of your project.
 
+### Permissions
+
+The action requires these permissions:
+
+```yaml
+permissions:
+  contents: read        # Read repository files
+  issues: write        # Comment on issues
+  pull-requests: write # Comment on PRs
+```
+
+If your workflow needs additional permissions (e.g., to create branches), add them explicitly.
+
 ## Comparison: Wrapper vs Standalone
 
 **Before (Standalone Agent):**
-- Custom implementation using Anthropic SDK
+- Custom implementation using provider SDK
 - Manual prompt engineering
 - Limited capabilities
 - Hard to maintain/extend
@@ -179,6 +261,30 @@ You can review and curate these files to guide the bot's understanding of your p
 - Shared codebase with other OpenClaw deployments
 - Automatic updates when OpenClaw improves
 - Same agent across all platforms (WhatsApp, Discord, GitHub)
+- Provider-agnostic (switch models/providers easily)
+
+## Troubleshooting
+
+### Cache Issues
+
+If the bot seems to have lost its memory:
+- Check the Actions cache (Settings → Actions → Caches)
+- Cache is branch-specific — each branch has separate memory
+- Cache entries expire after 7 days of no use
+
+### Timeout Issues
+
+If the bot times out:
+- Default timeout is 15 minutes (adjust with `timeout-minutes`)
+- The bot has a 120-second lifecycle timeout for agent responses
+- Check Gateway logs for errors
+
+### API Key Issues
+
+Make sure:
+- The secret name matches your provider (e.g., `ANTHROPIC_API_KEY` for Anthropic)
+- The secret is set at repository or organization level
+- The API key has sufficient credits/quota
 
 ## Development
 
@@ -207,4 +313,4 @@ MIT
 ## Support
 
 - Issues: https://github.com/offloadmywork/openclaw-github-app/issues
-- OpenClaw: https://github.com/yourusername/openclaw (adjust as needed)
+- OpenClaw: https://github.com/openclaw/openclaw

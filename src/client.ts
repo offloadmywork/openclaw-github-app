@@ -100,8 +100,11 @@ export class OpenClawClient {
     
     core.info('Agent request accepted, waiting for lifecycle end...');
     
-    // Wait for lifecycle to complete
-    await this.lifecycleEndPromise;
+    // Wait for lifecycle to complete (with timeout)
+    const timeoutPromise = new Promise<void>((_, reject) => 
+      setTimeout(() => reject(new Error('Agent lifecycle timeout after 120s')), 120000)
+    );
+    await Promise.race([this.lifecycleEndPromise, timeoutPromise]);
     
     const fullResponse = this.streamBuffer.join('');
     core.info(`Agent response complete (${fullResponse.length} chars)`);
