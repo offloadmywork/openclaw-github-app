@@ -209,7 +209,8 @@ export class OpenClawClient {
           this.connectReject = null;
         }
       } else {
-        const err = new Error(`Connect rejected: ${response.error || JSON.stringify(response.payload)}`);
+        const errMsg = typeof response.error === 'string' ? response.error : JSON.stringify(response.error || response.payload);
+        const err = new Error(`Connect rejected: ${errMsg}`);
         core.error(err.message);
         if (this.connectReject) {
           this.connectReject(err);
@@ -252,7 +253,7 @@ export class OpenClawClient {
           minProtocol: 3,
           maxProtocol: 3,
           client: {
-            id: 'github-action',
+            id: 'cli',
             version: '1.0.0',
             platform: process.platform,
             mode: 'operator'
