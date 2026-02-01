@@ -76105,7 +76105,7 @@ var DEFAULT_MODELS = {
 var gatewayProcess = null;
 function resolveModel(provider, model) {
   if (model) {
-    if (model.includes("/")) return model;
+    if (model.startsWith(`${provider}/`)) return model;
     return `${provider}/${model}`;
   }
   return DEFAULT_MODELS[provider] || `${provider}/default`;

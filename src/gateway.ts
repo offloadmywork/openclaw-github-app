@@ -36,9 +36,9 @@ let gatewayProcess: ChildProcess | null = null;
 
 export function resolveModel(provider: string, model: string): string {
   if (model) {
-    // If model already has provider prefix, use as-is
-    if (model.includes('/')) return model;
-    // Otherwise, add provider prefix
+    // If model already starts with the provider prefix, use as-is
+    if (model.startsWith(`${provider}/`)) return model;
+    // Otherwise, add provider prefix (important for OpenRouter where model names contain slashes)
     return `${provider}/${model}`;
   }
   return DEFAULT_MODELS[provider] || `${provider}/default`;
