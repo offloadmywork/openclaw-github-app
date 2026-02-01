@@ -76117,9 +76117,6 @@ async function startGateway(config) {
   const resolvedModel = resolveModel(config.provider, config.model);
   const gatewayToken = require("crypto").randomBytes(16).toString("hex");
   const openclawConfig = {
-    gateway: {
-      auth: { token: gatewayToken }
-    },
     agents: {
       defaults: {
         model: { primary: resolvedModel }
@@ -76135,6 +76132,7 @@ async function startGateway(config) {
   const env = {
     ...process.env,
     OPENCLAW_CONFIG: configPath,
+    OPENCLAW_GATEWAY_TOKEN: gatewayToken,
     [envKey]: config.apiKey
   };
   return new Promise((resolve2, reject) => {

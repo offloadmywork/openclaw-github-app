@@ -57,9 +57,6 @@ export async function startGateway(config: GatewayConfig): Promise<void> {
   const gatewayToken = require('crypto').randomBytes(16).toString('hex');
   
   const openclawConfig = {
-    gateway: {
-      auth: { token: gatewayToken }
-    },
     agents: {
       defaults: {
         model: { primary: resolvedModel }
@@ -81,6 +78,7 @@ export async function startGateway(config: GatewayConfig): Promise<void> {
   const env = {
     ...process.env,
     OPENCLAW_CONFIG: configPath,
+    OPENCLAW_GATEWAY_TOKEN: gatewayToken,
     [envKey]: config.apiKey,
   };
 
