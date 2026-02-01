@@ -1,5 +1,94 @@
 import * as core from '@actions/core';
+import * as crypto from 'crypto';
 import WebSocket from 'ws';
+
+// --- Device identity helpers (mirrors openclaw's device-identity.js) ---
+
+const ED25519_SPKI_PREFIX = Buffer.from('302a300506032b6570032100', 'hex');
+
+function base64UrlEncode(buf: Buffer): string {
+  return buf.toString('base64').replaceAll('+', '-').replaceAll('/', '_').replace(/=+$/g, '');
+}
+
+function derivePublicKeyRaw(publicKeyPem: string): Buffer {
+  const key = crypto.createPublicKey(publicKeyPem);
+  const spki = key.export({ type: 'spki', format: 'der' }) as Buffer;
+  if (
+    spki.length === ED25519_SPKI_PREFIX.length + 32 &&
+    spki.subarray(0, ED25519_SPKI_PREFIX.length).equals(ED25519_SPKI_PREFIX)
+  ) {
+    return spki.subarray(ED25519_SPKI_PREFIX.length);
+  }
+  return spki;
+}
+
+function fingerprintPublicKey(publicKeyPem: string): string {
+  const raw = derivePublicKeyRaw(publicKeyPem);
+  return crypto.createHash('sha256').update(raw).digest('hex');
+}
+
+function publicKeyRawBase64UrlFromPem(publicKeyPem: string): string {
+  return base64UrlEncode(derivePublicKeyRaw(publicKeyPem));
+}
+
+function signDevicePayload(privateKeyPem: string, payload: string): string {
+  const key = crypto.createPrivateKey(privateKeyPem);
+  const sig = crypto.sign(null, Buffer.from(payload, 'utf8'), key);
+  return base64UrlEncode(sig);
+}
+
+interface DeviceIdentity {
+  deviceId: string;
+  publicKeyPem: string;
+  privateKeyPem: string;
+}
+
+function generateDeviceIdentity(): DeviceIdentity {
+  const { publicKey, privateKey } = crypto.generateKeyPairSync('ed25519');
+  const publicKeyPem = publicKey.export({ type: 'spki', format: 'pem' }).toString();
+  const privateKeyPem = privateKey.export({ type: 'pkcs8', format: 'pem' }).toString();
+  const deviceId = fingerprintPublicKey(publicKeyPem);
+  return { deviceId, publicKeyPem, privateKeyPem };
+}
+
+function buildDeviceAuthPayload(params: {
+  deviceId: string;
+  clientId: string;
+  clientMode: string;
+  role: string;
+  scopes: string[];
+  signedAtMs: number;
+  token: string | null;
+  nonce?: string;
+}): string {
+  const version = params.nonce ? 'v2' : 'v1';
+  const scopes = params.scopes.join(',');
+  const token = params.token ?? '';
+  const base = [
+    version,
+    params.deviceId,
+    params.clientId,
+    params.clientMode,
+    params.role,
+    scopes,
+    String(params.signedAtMs),
+    token,
+  ];
+  if (version === 'v2') {
+    base.push(params.nonce ?? '');
+  }
+  return base.join('|');
+}
+
+// --- Valid gateway constants ---
+
+// Valid client.id values (from GATEWAY_CLIENT_IDS)
+const CLIENT_ID = 'gateway-client';
+// Valid client.mode values (from GATEWAY_CLIENT_MODES)
+const CLIENT_MODE = 'backend';
+const PROTOCOL_VERSION = 3;
+
+// --- Client implementation ---
 
 interface RPCRequest {
   type: 'req';
@@ -13,7 +102,7 @@ interface RPCResponse {
   id: string;
   ok: boolean;
   payload?: any;
-  error?: string;
+  error?: any;
 }
 
 interface StreamEvent {
@@ -39,6 +128,13 @@ export class OpenClawClient {
   private connectResolve: (() => void) | null = null;
   private connectReject: ((error: Error) => void) | null = null;
   private connectRequestId: string | null = null;
+  private deviceIdentity: DeviceIdentity;
+
+  constructor() {
+    // Generate an ephemeral Ed25519 keypair for device identity
+    this.deviceIdentity = generateDeviceIdentity();
+    core.info(`Device identity generated (id=${this.deviceIdentity.deviceId.substring(0, 16)}...)`);
+  }
 
   /**
    * Connect to the OpenClaw Gateway (with timeout)
@@ -196,7 +292,10 @@ export class OpenClawClient {
    * Handle RPC response
    */
   private handleResponse(response: RPCResponse): void {
-    core.info(`RPC response: id=${response.id} ok=${response.ok} payload=${JSON.stringify(response.payload || response.error || '').substring(0, 200)}`);
+    const errStr = response.error
+      ? (typeof response.error === 'object' ? response.error.message : String(response.error))
+      : '';
+    core.info(`RPC response: id=${response.id} ok=${response.ok} payload=${JSON.stringify(response.payload || errStr || '').substring(0, 200)}`);
     
     // Handle connect handshake response (hello-ok or rejection)
     if (this.connectRequestId && response.id === this.connectRequestId) {
@@ -209,7 +308,9 @@ export class OpenClawClient {
           this.connectReject = null;
         }
       } else {
-        const errMsg = typeof response.error === 'string' ? response.error : JSON.stringify(response.error || response.payload);
+        const errMsg = response.error
+          ? (typeof response.error === 'object' ? response.error.message : String(response.error))
+          : JSON.stringify(response.payload);
         const err = new Error(`Connect rejected: ${errMsg}`);
         core.error(err.message);
         if (this.connectReject) {
@@ -228,7 +329,10 @@ export class OpenClawClient {
       if (response.ok) {
         pending.resolve(response.payload);
       } else {
-        pending.reject(new Error(response.error || 'Request failed'));
+        const msg = response.error
+          ? (typeof response.error === 'object' ? response.error.message : String(response.error))
+          : 'Request failed';
+        pending.reject(new Error(msg));
       }
     }
   }
@@ -239,36 +343,56 @@ export class OpenClawClient {
   private handleEvent(event: StreamEvent): void {
     // Handle connect.challenge from gateway
     if (event.event === 'connect.challenge') {
-      core.info(`Received connect.challenge (nonce=${event.payload?.nonce?.substring(0, 8)}...), sending connect request...`);
-      const token = (globalThis as any).__openclawGatewayToken || '';
+      const nonce: string | undefined = event.payload?.nonce;
+      core.info(`Received connect.challenge (nonce=${nonce?.substring(0, 8) ?? 'none'}...), sending connect request...`);
+      const token: string = (globalThis as any).__openclawGatewayToken || '';
       
       const connectId = this.nextId();
       this.connectRequestId = connectId;
+
+      const role = 'operator';
+      const scopes = ['operator.read', 'operator.write'];
+      const signedAtMs = Date.now();
+      
+      // Build the signed device payload (same format as the official Gateway client)
+      const authPayload = buildDeviceAuthPayload({
+        deviceId: this.deviceIdentity.deviceId,
+        clientId: CLIENT_ID,
+        clientMode: CLIENT_MODE,
+        role,
+        scopes,
+        signedAtMs,
+        token: token || null,
+        nonce,
+      });
+      const signature = signDevicePayload(this.deviceIdentity.privateKeyPem, authPayload);
       
       const connectRequest = {
         type: 'req' as const,
         id: connectId,
         method: 'connect',
         params: {
-          minProtocol: 3,
-          maxProtocol: 3,
+          minProtocol: PROTOCOL_VERSION,
+          maxProtocol: PROTOCOL_VERSION,
           client: {
-            id: 'cli',
-            version: '1.0.0',
+            id: CLIENT_ID,
+            version: '0.2.0',
             platform: process.platform,
-            mode: 'operator'
+            mode: CLIENT_MODE,
           },
-          role: 'operator',
-          scopes: ['operator.read', 'operator.write'],
+          role,
+          scopes,
           caps: [],
-          commands: [],
-          permissions: {},
           auth: {
-            token: token
+            token: token || undefined,
           },
           device: {
-            id: `github-action-${require('crypto').randomBytes(8).toString('hex')}`
-          }
+            id: this.deviceIdentity.deviceId,
+            publicKey: publicKeyRawBase64UrlFromPem(this.deviceIdentity.publicKeyPem),
+            signature,
+            signedAt: signedAtMs,
+            nonce,
+          },
         }
       };
       

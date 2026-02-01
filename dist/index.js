@@ -184,7 +184,7 @@ var require_file_command = __commonJS({
     };
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.prepareKeyValueMessage = exports2.issueFileCommand = void 0;
-    var crypto2 = __importStar2(require("crypto"));
+    var crypto3 = __importStar2(require("crypto"));
     var fs4 = __importStar2(require("fs"));
     var os = __importStar2(require("os"));
     var utils_1 = require_utils();
@@ -202,7 +202,7 @@ var require_file_command = __commonJS({
     }
     exports2.issueFileCommand = issueFileCommand;
     function prepareKeyValueMessage(key, value) {
-      const delimiter = `ghadelimiter_${crypto2.randomUUID()}`;
+      const delimiter = `ghadelimiter_${crypto3.randomUUID()}`;
       const convertedValue = (0, utils_1.toCommandValue)(value);
       if (key.includes(delimiter)) {
         throw new Error(`Unexpected input: name should not contain the delimiter "${delimiter}"`);
@@ -3637,11 +3637,11 @@ var require_util2 = __commonJS({
     var assert = require("assert");
     var { isUint8Array } = require("util/types");
     var supportedHashes = [];
-    var crypto2;
+    var crypto3;
     try {
-      crypto2 = require("crypto");
+      crypto3 = require("crypto");
       const possibleRelevantHashes = ["sha256", "sha384", "sha512"];
-      supportedHashes = crypto2.getHashes().filter((hash) => possibleRelevantHashes.includes(hash));
+      supportedHashes = crypto3.getHashes().filter((hash) => possibleRelevantHashes.includes(hash));
     } catch {
     }
     function responseURL(response) {
@@ -3918,7 +3918,7 @@ var require_util2 = __commonJS({
       }
     }
     function bytesMatch(bytes, metadataList) {
-      if (crypto2 === void 0) {
+      if (crypto3 === void 0) {
         return true;
       }
       const parsedMetadata = parseMetadata(metadataList);
@@ -3933,7 +3933,7 @@ var require_util2 = __commonJS({
       for (const item of metadata) {
         const algorithm = item.algo;
         const expectedValue = item.hash;
-        let actualValue = crypto2.createHash(algorithm).update(bytes).digest("base64");
+        let actualValue = crypto3.createHash(algorithm).update(bytes).digest("base64");
         if (actualValue[actualValue.length - 1] === "=") {
           if (actualValue[actualValue.length - 2] === "=") {
             actualValue = actualValue.slice(0, -2);
@@ -5279,8 +5279,8 @@ var require_body = __commonJS({
     var { parseMIMEType, serializeAMimeType } = require_dataURL();
     var random;
     try {
-      const crypto2 = require("node:crypto");
-      random = (max) => crypto2.randomInt(0, max);
+      const crypto3 = require("node:crypto");
+      random = (max) => crypto3.randomInt(0, max);
     } catch {
       random = (max) => Math.floor(Math.random(max));
     }
@@ -16330,9 +16330,9 @@ var require_connection = __commonJS({
     channels.open = diagnosticsChannel.channel("undici:websocket:open");
     channels.close = diagnosticsChannel.channel("undici:websocket:close");
     channels.socketError = diagnosticsChannel.channel("undici:websocket:socket_error");
-    var crypto2;
+    var crypto3;
     try {
-      crypto2 = require("crypto");
+      crypto3 = require("crypto");
     } catch {
     }
     function establishWebSocketConnection(url, protocols, ws, onEstablish, options) {
@@ -16351,7 +16351,7 @@ var require_connection = __commonJS({
         const headersList = new Headers(options.headers)[kHeadersList];
         request.headersList = headersList;
       }
-      const keyValue = crypto2.randomBytes(16).toString("base64");
+      const keyValue = crypto3.randomBytes(16).toString("base64");
       request.headersList.append("sec-websocket-key", keyValue);
       request.headersList.append("sec-websocket-version", "13");
       for (const protocol of protocols) {
@@ -16380,7 +16380,7 @@ var require_connection = __commonJS({
             return;
           }
           const secWSAccept = response.headersList.get("Sec-WebSocket-Accept");
-          const digest = crypto2.createHash("sha1").update(keyValue + uid).digest("base64");
+          const digest = crypto3.createHash("sha1").update(keyValue + uid).digest("base64");
           if (secWSAccept !== digest) {
             failWebsocketConnection(ws, "Incorrect hash received in Sec-WebSocket-Accept header.");
             return;
@@ -16460,9 +16460,9 @@ var require_frame = __commonJS({
   "node_modules/undici/lib/websocket/frame.js"(exports2, module2) {
     "use strict";
     var { maxUnsigned16Bit } = require_constants5();
-    var crypto2;
+    var crypto3;
     try {
-      crypto2 = require("crypto");
+      crypto3 = require("crypto");
     } catch {
     }
     var WebsocketFrameSend = class {
@@ -16471,7 +16471,7 @@ var require_frame = __commonJS({
        */
       constructor(data) {
         this.frameData = data;
-        this.maskKey = crypto2.randomBytes(4);
+        this.maskKey = crypto3.randomBytes(4);
       }
       createFrame(opcode) {
         const bodyLength = this.frameData?.byteLength ?? 0;
@@ -26856,7 +26856,7 @@ var require_cacheUtils = __commonJS({
     var exec2 = __importStar2(require_exec());
     var glob = __importStar2(require_glob());
     var io = __importStar2(require_io());
-    var crypto2 = __importStar2(require("crypto"));
+    var crypto3 = __importStar2(require("crypto"));
     var fs4 = __importStar2(require("fs"));
     var path4 = __importStar2(require("path"));
     var semver = __importStar2(require_semver());
@@ -26880,7 +26880,7 @@ var require_cacheUtils = __commonJS({
           }
           tempDirectory = path4.join(baseLocation, "actions", "temp");
         }
-        const dest = path4.join(tempDirectory, crypto2.randomUUID());
+        const dest = path4.join(tempDirectory, crypto3.randomUUID());
         yield io.mkdirP(dest);
         return dest;
       });
@@ -26996,7 +26996,7 @@ var require_cacheUtils = __commonJS({
         components.push("windows-only");
       }
       components.push(versionSalt);
-      return crypto2.createHash("sha256").update(components.join("|")).digest("hex");
+      return crypto3.createHash("sha256").update(components.join("|")).digest("hex");
     }
     exports2.getCacheVersion = getCacheVersion;
     function getRuntimeToken() {
@@ -67474,7 +67474,7 @@ var require_binary_writer = __commonJS({
        * Write a `sint64` value, a signed, zig-zag-encoded 64-bit varint.
        */
       sint64(value) {
-        let long = pb_long_1.PbLong.from(value), sign = long.hi >> 31, lo = long.lo << 1 ^ sign, hi = (long.hi << 1 | long.lo >>> 31) ^ sign;
+        let long = pb_long_1.PbLong.from(value), sign2 = long.hi >> 31, lo = long.lo << 1 ^ sign2, hi = (long.hi << 1 | long.lo >>> 31) ^ sign2;
         goog_varint_1.varint64write(lo, hi, this.buf);
         return this;
       }
@@ -74452,7 +74452,7 @@ var require_websocket2 = __commonJS({
     var http = require("http");
     var net = require("net");
     var tls = require("tls");
-    var { randomBytes, createHash } = require("crypto");
+    var { randomBytes, createHash: createHash2 } = require("crypto");
     var { Duplex, Readable } = require("stream");
     var { URL: URL2 } = require("url");
     var PerMessageDeflate = require_permessage_deflate();
@@ -75112,7 +75112,7 @@ var require_websocket2 = __commonJS({
           abortHandshake(websocket, socket, "Invalid Upgrade header");
           return;
         }
-        const digest = createHash("sha1").update(key + GUID).digest("base64");
+        const digest = createHash2("sha1").update(key + GUID).digest("base64");
         if (res.headers["sec-websocket-accept"] !== digest) {
           abortHandshake(websocket, socket, "Invalid Sec-WebSocket-Accept header");
           return;
@@ -75479,7 +75479,7 @@ var require_websocket_server = __commonJS({
     var EventEmitter = require("events");
     var http = require("http");
     var { Duplex } = require("stream");
-    var { createHash } = require("crypto");
+    var { createHash: createHash2 } = require("crypto");
     var extension = require_extension();
     var PerMessageDeflate = require_permessage_deflate();
     var subprotocol = require_subprotocol();
@@ -75780,7 +75780,7 @@ var require_websocket_server = __commonJS({
           );
         }
         if (this._state > RUNNING) return abortHandshake(socket, 503);
-        const digest = createHash("sha1").update(key + GUID).digest("base64");
+        const digest = createHash2("sha1").update(key + GUID).digest("base64");
         const headers = [
           "HTTP/1.1 101 Switching Protocols",
           "Upgrade: websocket",
@@ -76212,7 +76212,61 @@ async function stopGateway() {
 
 // src/client.ts
 var core4 = __toESM(require_core());
+var crypto2 = __toESM(require("crypto"));
 init_wrapper();
+var ED25519_SPKI_PREFIX = Buffer.from("302a300506032b6570032100", "hex");
+function base64UrlEncode(buf) {
+  return buf.toString("base64").replaceAll("+", "-").replaceAll("/", "_").replace(/=+$/g, "");
+}
+function derivePublicKeyRaw(publicKeyPem) {
+  const key = crypto2.createPublicKey(publicKeyPem);
+  const spki = key.export({ type: "spki", format: "der" });
+  if (spki.length === ED25519_SPKI_PREFIX.length + 32 && spki.subarray(0, ED25519_SPKI_PREFIX.length).equals(ED25519_SPKI_PREFIX)) {
+    return spki.subarray(ED25519_SPKI_PREFIX.length);
+  }
+  return spki;
+}
+function fingerprintPublicKey(publicKeyPem) {
+  const raw = derivePublicKeyRaw(publicKeyPem);
+  return crypto2.createHash("sha256").update(raw).digest("hex");
+}
+function publicKeyRawBase64UrlFromPem(publicKeyPem) {
+  return base64UrlEncode(derivePublicKeyRaw(publicKeyPem));
+}
+function signDevicePayload(privateKeyPem, payload) {
+  const key = crypto2.createPrivateKey(privateKeyPem);
+  const sig = crypto2.sign(null, Buffer.from(payload, "utf8"), key);
+  return base64UrlEncode(sig);
+}
+function generateDeviceIdentity() {
+  const { publicKey, privateKey } = crypto2.generateKeyPairSync("ed25519");
+  const publicKeyPem = publicKey.export({ type: "spki", format: "pem" }).toString();
+  const privateKeyPem = privateKey.export({ type: "pkcs8", format: "pem" }).toString();
+  const deviceId = fingerprintPublicKey(publicKeyPem);
+  return { deviceId, publicKeyPem, privateKeyPem };
+}
+function buildDeviceAuthPayload(params) {
+  const version = params.nonce ? "v2" : "v1";
+  const scopes = params.scopes.join(",");
+  const token = params.token ?? "";
+  const base = [
+    version,
+    params.deviceId,
+    params.clientId,
+    params.clientMode,
+    params.role,
+    scopes,
+    String(params.signedAtMs),
+    token
+  ];
+  if (version === "v2") {
+    base.push(params.nonce ?? "");
+  }
+  return base.join("|");
+}
+var CLIENT_ID = "gateway-client";
+var CLIENT_MODE = "backend";
+var PROTOCOL_VERSION = 3;
 var OpenClawClient = class {
   ws = null;
   requestId = 0;
@@ -76223,6 +76277,11 @@ var OpenClawClient = class {
   connectResolve = null;
   connectReject = null;
   connectRequestId = null;
+  deviceIdentity;
+  constructor() {
+    this.deviceIdentity = generateDeviceIdentity();
+    core4.info(`Device identity generated (id=${this.deviceIdentity.deviceId.substring(0, 16)}...)`);
+  }
   /**
    * Connect to the OpenClaw Gateway (with timeout)
    */
@@ -76354,7 +76413,8 @@ var OpenClawClient = class {
    * Handle RPC response
    */
   handleResponse(response) {
-    core4.info(`RPC response: id=${response.id} ok=${response.ok} payload=${JSON.stringify(response.payload || response.error || "").substring(0, 200)}`);
+    const errStr = response.error ? typeof response.error === "object" ? response.error.message : String(response.error) : "";
+    core4.info(`RPC response: id=${response.id} ok=${response.ok} payload=${JSON.stringify(response.payload || errStr || "").substring(0, 200)}`);
     if (this.connectRequestId && response.id === this.connectRequestId) {
       this.connectRequestId = null;
       if (response.ok && response.payload?.type === "hello-ok") {
@@ -76365,7 +76425,7 @@ var OpenClawClient = class {
           this.connectReject = null;
         }
       } else {
-        const errMsg = typeof response.error === "string" ? response.error : JSON.stringify(response.error || response.payload);
+        const errMsg = response.error ? typeof response.error === "object" ? response.error.message : String(response.error) : JSON.stringify(response.payload);
         const err = new Error(`Connect rejected: ${errMsg}`);
         core4.error(err.message);
         if (this.connectReject) {
@@ -76382,7 +76442,8 @@ var OpenClawClient = class {
       if (response.ok) {
         pending.resolve(response.payload);
       } else {
-        pending.reject(new Error(response.error || "Request failed"));
+        const msg = response.error ? typeof response.error === "object" ? response.error.message : String(response.error) : "Request failed";
+        pending.reject(new Error(msg));
       }
     }
   }
@@ -76391,33 +76452,50 @@ var OpenClawClient = class {
    */
   handleEvent(event) {
     if (event.event === "connect.challenge") {
-      core4.info(`Received connect.challenge (nonce=${event.payload?.nonce?.substring(0, 8)}...), sending connect request...`);
+      const nonce = event.payload?.nonce;
+      core4.info(`Received connect.challenge (nonce=${nonce?.substring(0, 8) ?? "none"}...), sending connect request...`);
       const token = globalThis.__openclawGatewayToken || "";
       const connectId = this.nextId();
       this.connectRequestId = connectId;
+      const role = "operator";
+      const scopes = ["operator.read", "operator.write"];
+      const signedAtMs = Date.now();
+      const authPayload = buildDeviceAuthPayload({
+        deviceId: this.deviceIdentity.deviceId,
+        clientId: CLIENT_ID,
+        clientMode: CLIENT_MODE,
+        role,
+        scopes,
+        signedAtMs,
+        token: token || null,
+        nonce
+      });
+      const signature = signDevicePayload(this.deviceIdentity.privateKeyPem, authPayload);
       const connectRequest = {
         type: "req",
         id: connectId,
         method: "connect",
         params: {
-          minProtocol: 3,
-          maxProtocol: 3,
+          minProtocol: PROTOCOL_VERSION,
+          maxProtocol: PROTOCOL_VERSION,
           client: {
-            id: "cli",
-            version: "1.0.0",
+            id: CLIENT_ID,
+            version: "0.2.0",
             platform: process.platform,
-            mode: "operator"
+            mode: CLIENT_MODE
           },
-          role: "operator",
-          scopes: ["operator.read", "operator.write"],
+          role,
+          scopes,
           caps: [],
-          commands: [],
-          permissions: {},
           auth: {
-            token
+            token: token || void 0
           },
           device: {
-            id: `github-action-${require("crypto").randomBytes(8).toString("hex")}`
+            id: this.deviceIdentity.deviceId,
+            publicKey: publicKeyRawBase64UrlFromPem(this.deviceIdentity.publicKeyPem),
+            signature,
+            signedAt: signedAtMs,
+            nonce
           }
         }
       };
