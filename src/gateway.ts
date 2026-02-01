@@ -47,8 +47,9 @@ export function resolveModel(provider: string, model: string): string {
 export async function startGateway(config: GatewayConfig): Promise<void> {
   core.info('Starting OpenClaw Gateway...');
 
-  // Write minimal OpenClaw config
-  const configDir = path.join(config.workspacePath, '.config');
+  // Write minimal OpenClaw config to ~/.openclaw/openclaw.json
+  const homeDir = process.env.HOME || process.env.USERPROFILE || '.';
+  const configDir = path.join(homeDir, '.openclaw');
   fs.mkdirSync(configDir, { recursive: true });
 
   const resolvedModel = resolveModel(config.provider, config.model);
@@ -59,7 +60,8 @@ export async function startGateway(config: GatewayConfig): Promise<void> {
   const openclawConfig = {
     agents: {
       defaults: {
-        model: { primary: resolvedModel }
+        model: { primary: resolvedModel },
+        workspace: config.workspacePath
       }
     },
     channels: {}
@@ -71,20 +73,20 @@ export async function startGateway(config: GatewayConfig): Promise<void> {
   const configPath = path.join(configDir, 'openclaw.json');
   fs.writeFileSync(configPath, JSON.stringify(openclawConfig, null, 2));
   core.info(`Config: provider=${config.provider}, model=${resolvedModel}`);
+  core.info(`Config path: ${configPath}, workspace: ${config.workspacePath}`);
 
   // Set the provider's API key env var
   const envKey = PROVIDER_ENV_MAP[config.provider] || `${config.provider.toUpperCase()}_API_KEY`;
   
   const env = {
     ...process.env,
-    OPENCLAW_CONFIG: configPath,
     OPENCLAW_GATEWAY_TOKEN: gatewayToken,
     [envKey]: config.apiKey,
   };
 
   return new Promise((resolve, reject) => {
     gatewayProcess = spawn('openclaw', ['gateway', '--allow-unconfigured'], {
-      cwd: config.workspacePath,
+      cwd: homeDir,
       env,
       stdio: ['ignore', 'pipe', 'pipe']
     });
@@ -116,10 +118,13 @@ export async function waitForReady(timeoutMs: number = 30000): Promise<void> {
   core.info('Waiting for Gateway to be ready...');
 
   const startTime = Date.now();
+  const token = (globalThis as any).__openclawGatewayToken || '';
+  
   while (Date.now() - startTime < timeoutMs) {
     try {
       const { default: WebSocket } = await import('ws');
-      const ws = new WebSocket('ws://localhost:18789');
+      const wsUrl = token ? `ws://localhost:18789?token=${token}` : 'ws://localhost:18789';
+      const ws = new WebSocket(wsUrl);
 
       await new Promise<void>((resolve, reject) => {
         ws.on('open', () => { ws.close(); resolve(); });

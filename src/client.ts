@@ -36,6 +36,8 @@ export class OpenClawClient {
   private streamBuffer: string[] = [];
   private lifecycleEndPromise: Promise<void> | null = null;
   private lifecycleEndResolve: (() => void) | null = null;
+  private connectResolve: (() => void) | null = null;
+  private connectReject: ((error: Error) => void) | null = null;
 
   /**
    * Connect to the OpenClaw Gateway
@@ -44,27 +46,24 @@ export class OpenClawClient {
     core.info('Connecting to OpenClaw Gateway...');
     
     return new Promise((resolve, reject) => {
+      this.connectResolve = resolve;
+      this.connectReject = reject;
+      
       const token = (globalThis as any).__openclawGatewayToken || '';
       const wsUrl = token ? `ws://localhost:18789?token=${token}` : 'ws://localhost:18789';
       this.ws = new WebSocket(wsUrl);
       
       this.ws.on('open', () => {
-        core.info('WebSocket connected');
-        
-        // Send connect frame
-        this.send({
-          type: 'req',
-          id: this.nextId(),
-          method: 'connect',
-          params: {}
-        });
-        
-        resolve();
+        core.info('WebSocket connected, waiting for connect.challenge...');
       });
       
       this.ws.on('error', (error) => {
         core.error(`WebSocket error: ${error}`);
-        reject(error);
+        if (this.connectReject) {
+          this.connectReject(error);
+          this.connectReject = null;
+          this.connectResolve = null;
+        }
       });
       
       this.ws.on('message', (data) => {
@@ -175,6 +174,17 @@ export class OpenClawClient {
    * Handle RPC response
    */
   private handleResponse(response: RPCResponse): void {
+    // Handle hello-ok from connect handshake
+    if (response.ok && response.payload?.type === 'hello-ok') {
+      core.info(`Connected! Protocol version: ${response.payload.protocol}`);
+      if (this.connectResolve) {
+        this.connectResolve();
+        this.connectResolve = null;
+        this.connectReject = null;
+      }
+      return;
+    }
+    
     const pending = this.pendingRequests.get(response.id);
     if (pending) {
       this.pendingRequests.delete(response.id);
@@ -191,6 +201,38 @@ export class OpenClawClient {
    * Handle stream event
    */
   private handleEvent(event: StreamEvent): void {
+    // Handle connect.challenge from gateway
+    if (event.event === 'connect.challenge') {
+      core.info('Received connect.challenge, sending connect request...');
+      const token = (globalThis as any).__openclawGatewayToken || '';
+      
+      const connectRequest = {
+        type: 'req',
+        id: this.nextId(),
+        method: 'connect',
+        params: {
+          minProtocol: 3,
+          maxProtocol: 3,
+          client: {
+            id: 'github-action',
+            version: '1.0.0',
+            platform: process.platform,
+            mode: 'operator'
+          },
+          role: 'operator',
+          scopes: ['operator.read', 'operator.write'],
+          caps: [],
+          commands: [],
+          auth: {
+            token: token
+          }
+        }
+      };
+      
+      this.send(connectRequest);
+      return;
+    }
+    
     // Agent stream events
     if (event.event === 'agent' && event.stream === 'assistant' && event.text) {
       this.streamBuffer.push(event.text);

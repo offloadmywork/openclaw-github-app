@@ -127,7 +127,12 @@ async function run(): Promise<void> {
   } catch (error) {
     if (client) client.disconnect();
     await stopGateway().catch(() => {});
-    core.setFailed(error instanceof Error ? error.message : 'Unknown error');
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    core.error(`Error details: ${errorMessage}`);
+    if (error instanceof Error && error.stack) {
+      core.error(`Stack trace: ${error.stack}`);
+    }
+    core.setFailed(errorMessage);
   }
 }
 

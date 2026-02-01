@@ -76112,14 +76112,16 @@ function resolveModel(provider, model) {
 }
 async function startGateway(config) {
   core3.info("Starting OpenClaw Gateway...");
-  const configDir = path2.join(config.workspacePath, ".config");
+  const homeDir = process.env.HOME || process.env.USERPROFILE || ".";
+  const configDir = path2.join(homeDir, ".openclaw");
   fs2.mkdirSync(configDir, { recursive: true });
   const resolvedModel = resolveModel(config.provider, config.model);
   const gatewayToken = require("crypto").randomBytes(16).toString("hex");
   const openclawConfig = {
     agents: {
       defaults: {
-        model: { primary: resolvedModel }
+        model: { primary: resolvedModel },
+        workspace: config.workspacePath
       }
     },
     channels: {}
@@ -76128,16 +76130,16 @@ async function startGateway(config) {
   const configPath = path2.join(configDir, "openclaw.json");
   fs2.writeFileSync(configPath, JSON.stringify(openclawConfig, null, 2));
   core3.info(`Config: provider=${config.provider}, model=${resolvedModel}`);
+  core3.info(`Config path: ${configPath}, workspace: ${config.workspacePath}`);
   const envKey = PROVIDER_ENV_MAP[config.provider] || `${config.provider.toUpperCase()}_API_KEY`;
   const env = {
     ...process.env,
-    OPENCLAW_CONFIG: configPath,
     OPENCLAW_GATEWAY_TOKEN: gatewayToken,
     [envKey]: config.apiKey
   };
   return new Promise((resolve2, reject) => {
     gatewayProcess = (0, import_child_process.spawn)("openclaw", ["gateway", "--allow-unconfigured"], {
-      cwd: config.workspacePath,
+      cwd: homeDir,
       env,
       stdio: ["ignore", "pipe", "pipe"]
     });
@@ -76162,10 +76164,12 @@ async function startGateway(config) {
 async function waitForReady(timeoutMs = 3e4) {
   core3.info("Waiting for Gateway to be ready...");
   const startTime = Date.now();
+  const token = globalThis.__openclawGatewayToken || "";
   while (Date.now() - startTime < timeoutMs) {
     try {
       const { default: WebSocket2 } = await Promise.resolve().then(() => (init_wrapper(), wrapper_exports));
-      const ws = new WebSocket2("ws://localhost:18789");
+      const wsUrl = token ? `ws://localhost:18789?token=${token}` : "ws://localhost:18789";
+      const ws = new WebSocket2(wsUrl);
       await new Promise((resolve2, reject) => {
         ws.on("open", () => {
           ws.close();
@@ -76216,28 +76220,29 @@ var OpenClawClient = class {
   streamBuffer = [];
   lifecycleEndPromise = null;
   lifecycleEndResolve = null;
+  connectResolve = null;
+  connectReject = null;
   /**
    * Connect to the OpenClaw Gateway
    */
   async connect() {
     core4.info("Connecting to OpenClaw Gateway...");
     return new Promise((resolve2, reject) => {
+      this.connectResolve = resolve2;
+      this.connectReject = reject;
       const token = globalThis.__openclawGatewayToken || "";
       const wsUrl = token ? `ws://localhost:18789?token=${token}` : "ws://localhost:18789";
       this.ws = new wrapper_default(wsUrl);
       this.ws.on("open", () => {
-        core4.info("WebSocket connected");
-        this.send({
-          type: "req",
-          id: this.nextId(),
-          method: "connect",
-          params: {}
-        });
-        resolve2();
+        core4.info("WebSocket connected, waiting for connect.challenge...");
       });
       this.ws.on("error", (error4) => {
         core4.error(`WebSocket error: ${error4}`);
-        reject(error4);
+        if (this.connectReject) {
+          this.connectReject(error4);
+          this.connectReject = null;
+          this.connectResolve = null;
+        }
       });
       this.ws.on("message", (data) => {
         this.handleMessage(data.toString());
@@ -76325,6 +76330,15 @@ var OpenClawClient = class {
    * Handle RPC response
    */
   handleResponse(response) {
+    if (response.ok && response.payload?.type === "hello-ok") {
+      core4.info(`Connected! Protocol version: ${response.payload.protocol}`);
+      if (this.connectResolve) {
+        this.connectResolve();
+        this.connectResolve = null;
+        this.connectReject = null;
+      }
+      return;
+    }
     const pending = this.pendingRequests.get(response.id);
     if (pending) {
       this.pendingRequests.delete(response.id);
@@ -76339,6 +76353,34 @@ var OpenClawClient = class {
    * Handle stream event
    */
   handleEvent(event) {
+    if (event.event === "connect.challenge") {
+      core4.info("Received connect.challenge, sending connect request...");
+      const token = globalThis.__openclawGatewayToken || "";
+      const connectRequest = {
+        type: "req",
+        id: this.nextId(),
+        method: "connect",
+        params: {
+          minProtocol: 3,
+          maxProtocol: 3,
+          client: {
+            id: "github-action",
+            version: "1.0.0",
+            platform: process.platform,
+            mode: "operator"
+          },
+          role: "operator",
+          scopes: ["operator.read", "operator.write"],
+          caps: [],
+          commands: [],
+          auth: {
+            token
+          }
+        }
+      };
+      this.send(connectRequest);
+      return;
+    }
     if (event.event === "agent" && event.stream === "assistant" && event.text) {
       this.streamBuffer.push(event.text);
     }
@@ -76459,7 +76501,12 @@ async function run() {
     if (client) client.disconnect();
     await stopGateway().catch(() => {
     });
-    core5.setFailed(error4 instanceof Error ? error4.message : "Unknown error");
+    const errorMessage = error4 instanceof Error ? error4.message : String(error4);
+    core5.error(`Error details: ${errorMessage}`);
+    if (error4 instanceof Error && error4.stack) {
+      core5.error(`Stack trace: ${error4.stack}`);
+    }
+    core5.setFailed(errorMessage);
   }
 }
 run();
