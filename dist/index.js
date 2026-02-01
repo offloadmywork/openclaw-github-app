@@ -76386,10 +76386,25 @@ async function run() {
       core5.warning(`OpenClaw install issue (may already exist): ${error4}`);
     }
     try {
+      const { stdout: npmBinPath } = await execAsync("npm bin -g");
+      const binDir = npmBinPath.trim();
+      if (binDir && !process.env.PATH?.includes(binDir)) {
+        process.env.PATH = `${binDir}:${process.env.PATH}`;
+        core5.info(`Added ${binDir} to PATH`);
+      }
+    } catch {
+      core5.warning("Could not determine npm global bin path");
+    }
+    try {
       const { stdout } = await execAsync("openclaw --version");
       core5.info(`OpenClaw version: ${stdout.trim()}`);
     } catch {
-      throw new Error("OpenClaw is not available. Installation may have failed.");
+      try {
+        const { stdout } = await execAsync("npx openclaw --version");
+        core5.info(`OpenClaw version (via npx): ${stdout.trim()}`);
+      } catch {
+        throw new Error("OpenClaw is not available. Installation may have failed.");
+      }
     }
     await restoreWorkspace(workspacePath, repo);
     await startGateway({ provider, apiKey, model, workspacePath });

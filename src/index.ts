@@ -42,11 +42,29 @@ async function run(): Promise<void> {
       core.warning(`OpenClaw install issue (may already exist): ${error}`);
     }
 
+    // Fix PATH — npm global bin may not be in PATH on GitHub Actions
+    try {
+      const { stdout: npmBinPath } = await execAsync('npm bin -g');
+      const binDir = npmBinPath.trim();
+      if (binDir && !process.env.PATH?.includes(binDir)) {
+        process.env.PATH = `${binDir}:${process.env.PATH}`;
+        core.info(`Added ${binDir} to PATH`);
+      }
+    } catch {
+      core.warning('Could not determine npm global bin path');
+    }
+
     try {
       const { stdout } = await execAsync('openclaw --version');
       core.info(`OpenClaw version: ${stdout.trim()}`);
     } catch {
-      throw new Error('OpenClaw is not available. Installation may have failed.');
+      // Fallback: try npx
+      try {
+        const { stdout } = await execAsync('npx openclaw --version');
+        core.info(`OpenClaw version (via npx): ${stdout.trim()}`);
+      } catch {
+        throw new Error('OpenClaw is not available. Installation may have failed.');
+      }
     }
 
     // Restore workspace from cache
