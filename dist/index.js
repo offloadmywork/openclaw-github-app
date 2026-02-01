@@ -74452,7 +74452,7 @@ var require_websocket2 = __commonJS({
     var http = require("http");
     var net = require("net");
     var tls = require("tls");
-    var { randomBytes, createHash: createHash2 } = require("crypto");
+    var { randomBytes: randomBytes2, createHash: createHash2 } = require("crypto");
     var { Duplex, Readable } = require("stream");
     var { URL: URL2 } = require("url");
     var PerMessageDeflate = require_permessage_deflate();
@@ -74982,7 +74982,7 @@ var require_websocket2 = __commonJS({
         }
       }
       const defaultPort = isSecure ? 443 : 80;
-      const key = randomBytes(16).toString("base64");
+      const key = randomBytes2(16).toString("base64");
       const request = isSecure ? https.request : http.request;
       const protocolSet = /* @__PURE__ */ new Set();
       let perMessageDeflate;
@@ -76348,7 +76348,8 @@ var OpenClawClient = class {
     this.streamBuffer = [];
     const response = await this.request("agent", {
       message: text,
-      sessionKey
+      sessionKey,
+      idempotencyKey: `gh-${Date.now()}-${crypto2.randomBytes(8).toString("hex")}`
     });
     core4.info("Agent request accepted, waiting for lifecycle end...");
     const timeoutPromise = new Promise(

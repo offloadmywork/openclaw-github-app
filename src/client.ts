@@ -213,7 +213,8 @@ export class OpenClawClient {
     // Send agent request
     const response = await this.request('agent', {
       message: text,
-      sessionKey
+      sessionKey,
+      idempotencyKey: `gh-${Date.now()}-${crypto.randomBytes(8).toString('hex')}`
     });
     
     core.info('Agent request accepted, waiting for lifecycle end...');
