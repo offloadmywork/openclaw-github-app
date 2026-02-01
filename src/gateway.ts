@@ -104,6 +104,7 @@ export async function startGateway(config: GatewayConfig): Promise<void> {
     ...process.env,
     OPENCLAW_GATEWAY_TOKEN: gatewayToken,
     [envKey]: config.apiKey,
+    GH_TOKEN: process.env.GITHUB_TOKEN || process.env.GH_TOKEN || '',
   };
 
   return new Promise((resolve, reject) => {
