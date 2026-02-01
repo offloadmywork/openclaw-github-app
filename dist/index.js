@@ -76117,6 +76117,21 @@ async function startGateway(config) {
   fs2.mkdirSync(configDir, { recursive: true });
   const resolvedModel = resolveModel(config.provider, config.model);
   const gatewayToken = require("crypto").randomBytes(16).toString("hex");
+  const PROVIDER_BASE_URLS = {
+    openrouter: "https://openrouter.ai/api/v1",
+    cerebras: "https://api.cerebras.ai/v1",
+    groq: "https://api.groq.com/openai/v1",
+    sambanova: "https://api.sambanova.ai/v1"
+  };
+  const providersConfig = {};
+  const baseUrl = PROVIDER_BASE_URLS[config.provider];
+  if (baseUrl) {
+    providersConfig[config.provider] = {
+      api: "openai-chat",
+      baseUrl,
+      models: [{ id: resolvedModel.replace(`${config.provider}/`, ""), contextWindow: 131072, maxTokens: 32768 }]
+    };
+  }
   const openclawConfig = {
     agents: {
       defaults: {
@@ -76126,6 +76141,9 @@ async function startGateway(config) {
     },
     channels: {}
   };
+  if (Object.keys(providersConfig).length > 0) {
+    openclawConfig.models = { providers: providersConfig };
+  }
   globalThis.__openclawGatewayToken = gatewayToken;
   const configPath = path2.join(configDir, "openclaw.json");
   fs2.writeFileSync(configPath, JSON.stringify(openclawConfig, null, 2));

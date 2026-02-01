@@ -57,7 +57,25 @@ export async function startGateway(config: GatewayConfig): Promise<void> {
   // Generate a random gateway token for local auth
   const gatewayToken = require('crypto').randomBytes(16).toString('hex');
   
-  const openclawConfig = {
+  // Build provider config for non-built-in providers that need baseUrl
+  const PROVIDER_BASE_URLS: Record<string, string> = {
+    openrouter: 'https://openrouter.ai/api/v1',
+    cerebras: 'https://api.cerebras.ai/v1',
+    groq: 'https://api.groq.com/openai/v1',
+    sambanova: 'https://api.sambanova.ai/v1',
+  };
+
+  const providersConfig: Record<string, any> = {};
+  const baseUrl = PROVIDER_BASE_URLS[config.provider];
+  if (baseUrl) {
+    providersConfig[config.provider] = {
+      api: 'openai-chat',
+      baseUrl,
+      models: [{ id: resolvedModel.replace(`${config.provider}/`, ''), contextWindow: 131072, maxTokens: 32768 }]
+    };
+  }
+
+  const openclawConfig: Record<string, any> = {
     agents: {
       defaults: {
         model: { primary: resolvedModel },
@@ -66,6 +84,10 @@ export async function startGateway(config: GatewayConfig): Promise<void> {
     },
     channels: {}
   };
+
+  if (Object.keys(providersConfig).length > 0) {
+    openclawConfig.models = { providers: providersConfig };
+  }
   
   // Export token so client can use it
   (globalThis as any).__openclawGatewayToken = gatewayToken;
