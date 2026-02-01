@@ -44,14 +44,26 @@ async function run(): Promise<void> {
 
     // Fix PATH — npm global bin may not be in PATH on GitHub Actions
     try {
-      const { stdout: npmBinPath } = await execAsync('npm bin -g');
-      const binDir = npmBinPath.trim();
+      const { stdout: npmPrefix } = await execAsync('npm config get prefix');
+      const binDir = path.join(npmPrefix.trim(), 'bin');
       if (binDir && !process.env.PATH?.includes(binDir)) {
         process.env.PATH = `${binDir}:${process.env.PATH}`;
         core.info(`Added ${binDir} to PATH`);
       }
-    } catch {
-      core.warning('Could not determine npm global bin path');
+    } catch (e) {
+      core.warning(`Could not determine npm prefix: ${e}`);
+    }
+
+    // Debug: check what was installed
+    try {
+      const { stdout: whichResult } = await execAsync('which openclaw || echo "not found"');
+      core.info(`which openclaw: ${whichResult.trim()}`);
+      const { stdout: lsResult } = await execAsync('ls -la $(npm config get prefix)/lib/node_modules/openclaw/package.json 2>/dev/null || echo "package not found"');
+      core.info(`openclaw package: ${lsResult.trim()}`);
+      const { stdout: binCheck } = await execAsync('cat $(npm config get prefix)/lib/node_modules/openclaw/package.json 2>/dev/null | node -e "const d=require(\'fs\').readFileSync(\'/dev/stdin\',\'utf8\');const p=JSON.parse(d);console.log(JSON.stringify(p.bin||\'no bin\'))" || echo "no package.json"');
+      core.info(`openclaw bin entry: ${binCheck.trim()}`);
+    } catch (e) {
+      core.info(`Debug check failed: ${e}`);
     }
 
     try {
@@ -60,10 +72,10 @@ async function run(): Promise<void> {
     } catch {
       // Fallback: try npx
       try {
-        const { stdout } = await execAsync('npx openclaw --version');
+        const { stdout } = await execAsync('npx openclaw --version', { timeout: 30000 });
         core.info(`OpenClaw version (via npx): ${stdout.trim()}`);
-      } catch {
-        throw new Error('OpenClaw is not available. Installation may have failed.');
+      } catch (e) {
+        throw new Error(`OpenClaw is not available. Installation may have failed. Error: ${e}`);
       }
     }
 

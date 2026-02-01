@@ -76386,24 +76386,34 @@ async function run() {
       core5.warning(`OpenClaw install issue (may already exist): ${error4}`);
     }
     try {
-      const { stdout: npmBinPath } = await execAsync("npm bin -g");
-      const binDir = npmBinPath.trim();
+      const { stdout: npmPrefix } = await execAsync("npm config get prefix");
+      const binDir = path3.join(npmPrefix.trim(), "bin");
       if (binDir && !process.env.PATH?.includes(binDir)) {
         process.env.PATH = `${binDir}:${process.env.PATH}`;
         core5.info(`Added ${binDir} to PATH`);
       }
-    } catch {
-      core5.warning("Could not determine npm global bin path");
+    } catch (e) {
+      core5.warning(`Could not determine npm prefix: ${e}`);
+    }
+    try {
+      const { stdout: whichResult } = await execAsync('which openclaw || echo "not found"');
+      core5.info(`which openclaw: ${whichResult.trim()}`);
+      const { stdout: lsResult } = await execAsync('ls -la $(npm config get prefix)/lib/node_modules/openclaw/package.json 2>/dev/null || echo "package not found"');
+      core5.info(`openclaw package: ${lsResult.trim()}`);
+      const { stdout: binCheck } = await execAsync(`cat $(npm config get prefix)/lib/node_modules/openclaw/package.json 2>/dev/null | node -e "const d=require('fs').readFileSync('/dev/stdin','utf8');const p=JSON.parse(d);console.log(JSON.stringify(p.bin||'no bin'))" || echo "no package.json"`);
+      core5.info(`openclaw bin entry: ${binCheck.trim()}`);
+    } catch (e) {
+      core5.info(`Debug check failed: ${e}`);
     }
     try {
       const { stdout } = await execAsync("openclaw --version");
       core5.info(`OpenClaw version: ${stdout.trim()}`);
     } catch {
       try {
-        const { stdout } = await execAsync("npx openclaw --version");
+        const { stdout } = await execAsync("npx openclaw --version", { timeout: 3e4 });
         core5.info(`OpenClaw version (via npx): ${stdout.trim()}`);
-      } catch {
-        throw new Error("OpenClaw is not available. Installation may have failed.");
+      } catch (e) {
+        throw new Error(`OpenClaw is not available. Installation may have failed. Error: ${e}`);
       }
     }
     await restoreWorkspace(workspacePath, repo);
