@@ -76115,7 +76115,11 @@ async function startGateway(config) {
   const configDir = path2.join(config.workspacePath, ".config");
   fs2.mkdirSync(configDir, { recursive: true });
   const resolvedModel = resolveModel(config.provider, config.model);
+  const gatewayToken = require("crypto").randomBytes(16).toString("hex");
   const openclawConfig = {
+    gateway: {
+      auth: { token: gatewayToken }
+    },
     agents: {
       defaults: {
         model: { primary: resolvedModel }
@@ -76123,6 +76127,7 @@ async function startGateway(config) {
     },
     channels: {}
   };
+  globalThis.__openclawGatewayToken = gatewayToken;
   const configPath = path2.join(configDir, "openclaw.json");
   fs2.writeFileSync(configPath, JSON.stringify(openclawConfig, null, 2));
   core3.info(`Config: provider=${config.provider}, model=${resolvedModel}`);
@@ -76219,7 +76224,9 @@ var OpenClawClient = class {
   async connect() {
     core4.info("Connecting to OpenClaw Gateway...");
     return new Promise((resolve2, reject) => {
-      this.ws = new wrapper_default("ws://localhost:18789");
+      const token = globalThis.__openclawGatewayToken || "";
+      const wsUrl = token ? `ws://localhost:18789?token=${token}` : "ws://localhost:18789";
+      this.ws = new wrapper_default(wsUrl);
       this.ws.on("open", () => {
         core4.info("WebSocket connected");
         this.send({

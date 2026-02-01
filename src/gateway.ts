@@ -53,7 +53,13 @@ export async function startGateway(config: GatewayConfig): Promise<void> {
 
   const resolvedModel = resolveModel(config.provider, config.model);
   
+  // Generate a random gateway token for local auth
+  const gatewayToken = require('crypto').randomBytes(16).toString('hex');
+  
   const openclawConfig = {
+    gateway: {
+      auth: { token: gatewayToken }
+    },
     agents: {
       defaults: {
         model: { primary: resolvedModel }
@@ -61,6 +67,9 @@ export async function startGateway(config: GatewayConfig): Promise<void> {
     },
     channels: {}
   };
+  
+  // Export token so client can use it
+  (globalThis as any).__openclawGatewayToken = gatewayToken;
 
   const configPath = path.join(configDir, 'openclaw.json');
   fs.writeFileSync(configPath, JSON.stringify(openclawConfig, null, 2));

@@ -44,7 +44,9 @@ export class OpenClawClient {
     core.info('Connecting to OpenClaw Gateway...');
     
     return new Promise((resolve, reject) => {
-      this.ws = new WebSocket('ws://localhost:18789');
+      const token = (globalThis as any).__openclawGatewayToken || '';
+      const wsUrl = token ? `ws://localhost:18789?token=${token}` : 'ws://localhost:18789';
+      this.ws = new WebSocket(wsUrl);
       
       this.ws.on('open', () => {
         core.info('WebSocket connected');
