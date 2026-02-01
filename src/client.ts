@@ -382,6 +382,13 @@ export class OpenClawClient {
         const msg = response.error
           ? (typeof response.error === 'object' ? response.error.message : String(response.error))
           : 'Request failed';
+        // If this is a keepAlive request whose accepted promise was already resolved,
+        // pending.reject is a no-op. Fire agentCompletionResolve so sendMessage
+        // doesn't hang waiting for the 300s lifecycle timeout.
+        if (pending.keepAlive && this.agentCompletionResolve) {
+          this.agentCompletionResolve(`⚠️ Error: ${msg}`);
+          this.agentCompletionResolve = null;
+        }
         pending.reject(new Error(msg));
         return;
       }
@@ -401,6 +408,22 @@ export class OpenClawClient {
           pending.resolve = () => {};
           pending.reject = () => {};
           return; // keep in pendingRequests
+        }
+        
+        // Fast-fail on error status (issue #3): if the second response
+        // has status "error", resolve immediately instead of waiting for
+        // the lifecycle timeout.
+        if (payload.status === 'error') {
+          this.pendingRequests.delete(response.id);
+          const errText = payload.error
+            ? (typeof payload.error === 'string' ? payload.error : payload.error.message || JSON.stringify(payload.error))
+            : payload.summary || 'Unknown error';
+          core.error(`Agent returned error status: ${errText}`);
+          if (this.agentCompletionResolve) {
+            this.agentCompletionResolve(`⚠️ Error: ${errText}`);
+            this.agentCompletionResolve = null;
+          }
+          return;
         }
         
         // Second (or later) response – completion

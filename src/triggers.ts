@@ -27,8 +27,8 @@ export async function parseTrigger(githubToken: string): Promise<TriggerContext>
   
   // Issue comment
   if (context.eventName === 'issue_comment' && context.payload.action === 'created') {
-    const comment = context.payload.comment;
-    const issue = context.payload.issue;
+    const comment = context.payload.comment!;
+    const issue = context.payload.issue!;
     
     return {
       type: 'issue_comment',
@@ -38,13 +38,14 @@ export async function parseTrigger(githubToken: string): Promise<TriggerContext>
     };
   }
   
-  // Issue opened
-  if (context.eventName === 'issues' && context.payload.action === 'opened') {
-    const issue = context.payload.issue;
+  // Issue opened or edited
+  if (context.eventName === 'issues' && (context.payload.action === 'opened' || context.payload.action === 'edited')) {
+    const issue = context.payload.issue!;
+    const action = context.payload.action;
     
     return {
       type: 'issue_created',
-      message: `New issue #${issue.number} opened by @${issue.user.login}: ${issue.title}\n\n${issue.body || '(no description)'}\n\n---\n\nIssue URL: ${issue.html_url}`,
+      message: `Issue #${issue.number} ${action} by @${issue.user.login}: ${issue.title}\n\n${issue.body || '(no description)'}\n\n---\n\nIssue URL: ${issue.html_url}`,
       issueNumber: issue.number,
       isPR: false
     };
@@ -52,8 +53,8 @@ export async function parseTrigger(githubToken: string): Promise<TriggerContext>
   
   // Pull request
   if (context.eventName === 'pull_request' && 
-      (context.payload.action === 'opened' || context.payload.action === 'synchronize')) {
-    const pr = context.payload.pull_request;
+      (context.payload.action === 'opened' || context.payload.action === 'synchronize' || context.payload.action === 'reopened')) {
+    const pr = context.payload.pull_request!;
     
     // Fetch files changed
     let filesChanged: string[] = [];
@@ -75,6 +76,19 @@ export async function parseTrigger(githubToken: string): Promise<TriggerContext>
     return {
       type: 'pull_request',
       message: `PR #${pr.number} by @${pr.user.login}: ${pr.title}\n\n${pr.body || '(no description)'}${diffSummary}\n\n---\n\nPR URL: ${pr.html_url}\nBranch: ${pr.head.ref} → ${pr.base.ref}`,
+      issueNumber: pr.number,
+      isPR: true
+    };
+  }
+  
+  // Pull request review comment
+  if (context.eventName === 'pull_request_review_comment' && context.payload.action === 'created') {
+    const comment = context.payload.comment!;
+    const pr = context.payload.pull_request!;
+    
+    return {
+      type: 'issue_comment',
+      message: `New review comment on PR #${pr.number} by @${comment.user.login}:\n\n${comment.body}\n\nFile: ${comment.path}${comment.line ? ` (line ${comment.line})` : ''}\n\n---\n\nPR title: ${pr.title}\nPR URL: ${pr.html_url}`,
       issueNumber: pr.number,
       isPR: true
     };

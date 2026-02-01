@@ -95,8 +95,29 @@ async function run(): Promise<void> {
     // Connect and send message
     client = new OpenClawClient();
     await client.connect();
-    const response = await client.sendMessage(trigger.message);
-    core.info(`Response: ${response.length} chars`);
+    let response: string;
+    try {
+      response = await client.sendMessage(trigger.message);
+      core.info(`Response: ${response.length} chars`);
+    } catch (sendError) {
+      const errorMsg = sendError instanceof Error ? sendError.message : String(sendError);
+      core.error(`Agent error: ${errorMsg}`);
+      // Post the error to the issue/PR if possible
+      if (trigger.issueNumber && githubToken) {
+        const octokit = github.getOctokit(githubToken);
+        try {
+          await octokit.rest.issues.createComment({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: trigger.issueNumber,
+            body: `🤖 **OpenClaw Bot**\n\n⚠️ An error occurred while processing this event:\n\n\`\`\`\n${errorMsg}\n\`\`\``
+          });
+        } catch (postError) {
+          core.error(`Failed to post error comment: ${postError}`);
+        }
+      }
+      throw sendError;
+    }
     client.disconnect();
     client = null;
 
@@ -104,15 +125,18 @@ async function run(): Promise<void> {
     if (trigger.issueNumber && !response.includes('HEARTBEAT_OK')) {
       const octokit = github.getOctokit(githubToken);
       try {
+        const body = response.trim()
+          ? `🤖 **OpenClaw Bot**\n\n${response}`
+          : `🤖 **OpenClaw Bot**\n\n_No response was generated._`;
         await octokit.rest.issues.createComment({
           owner: context.repo.owner,
           repo: context.repo.repo,
           issue_number: trigger.issueNumber,
-          body: response
+          body
         });
         core.info(`Posted to #${trigger.issueNumber}`);
       } catch (error) {
-        core.error(`Failed to post: ${error}`);
+        core.error(`Failed to post comment: ${error}`);
       }
     } else if (response.includes('HEARTBEAT_OK')) {
       core.info('Heartbeat OK — no action needed');

@@ -76020,11 +76020,12 @@ Issue URL: ${issue.html_url}`,
       isPR: !!issue.pull_request
     };
   }
-  if (context3.eventName === "issues" && context3.payload.action === "opened") {
+  if (context3.eventName === "issues" && (context3.payload.action === "opened" || context3.payload.action === "edited")) {
     const issue = context3.payload.issue;
+    const action = context3.payload.action;
     return {
       type: "issue_created",
-      message: `New issue #${issue.number} opened by @${issue.user.login}: ${issue.title}
+      message: `Issue #${issue.number} ${action} by @${issue.user.login}: ${issue.title}
 
 ${issue.body || "(no description)"}
 
@@ -76035,7 +76036,7 @@ Issue URL: ${issue.html_url}`,
       isPR: false
     };
   }
-  if (context3.eventName === "pull_request" && (context3.payload.action === "opened" || context3.payload.action === "synchronize")) {
+  if (context3.eventName === "pull_request" && (context3.payload.action === "opened" || context3.payload.action === "synchronize" || context3.payload.action === "reopened")) {
     const pr = context3.payload.pull_request;
     let filesChanged = [];
     try {
@@ -76063,6 +76064,25 @@ ${pr.body || "(no description)"}${diffSummary}
 
 PR URL: ${pr.html_url}
 Branch: ${pr.head.ref} \u2192 ${pr.base.ref}`,
+      issueNumber: pr.number,
+      isPR: true
+    };
+  }
+  if (context3.eventName === "pull_request_review_comment" && context3.payload.action === "created") {
+    const comment = context3.payload.comment;
+    const pr = context3.payload.pull_request;
+    return {
+      type: "issue_comment",
+      message: `New review comment on PR #${pr.number} by @${comment.user.login}:
+
+${comment.body}
+
+File: ${comment.path}${comment.line ? ` (line ${comment.line})` : ""}
+
+---
+
+PR title: ${pr.title}
+PR URL: ${pr.html_url}`,
       issueNumber: pr.number,
       isPR: true
     };
@@ -76497,6 +76517,10 @@ var OpenClawClient = class {
       if (!response.ok) {
         this.pendingRequests.delete(response.id);
         const msg = response.error ? typeof response.error === "object" ? response.error.message : String(response.error) : "Request failed";
+        if (pending.keepAlive && this.agentCompletionResolve) {
+          this.agentCompletionResolve(`\u26A0\uFE0F Error: ${msg}`);
+          this.agentCompletionResolve = null;
+        }
         pending.reject(new Error(msg));
         return;
       }
@@ -76508,6 +76532,16 @@ var OpenClawClient = class {
           };
           pending.reject = () => {
           };
+          return;
+        }
+        if (payload.status === "error") {
+          this.pendingRequests.delete(response.id);
+          const errText = payload.error ? typeof payload.error === "string" ? payload.error : payload.error.message || JSON.stringify(payload.error) : payload.summary || "Unknown error";
+          core4.error(`Agent returned error status: ${errText}`);
+          if (this.agentCompletionResolve) {
+            this.agentCompletionResolve(`\u26A0\uFE0F Error: ${errText}`);
+            this.agentCompletionResolve = null;
+          }
           return;
         }
         this.pendingRequests.delete(response.id);
@@ -76680,22 +76714,53 @@ async function run() {
     core5.info(`Message: ${trigger.message.substring(0, 200)}...`);
     client = new OpenClawClient();
     await client.connect();
-    const response = await client.sendMessage(trigger.message);
-    core5.info(`Response: ${response.length} chars`);
+    let response;
+    try {
+      response = await client.sendMessage(trigger.message);
+      core5.info(`Response: ${response.length} chars`);
+    } catch (sendError) {
+      const errorMsg = sendError instanceof Error ? sendError.message : String(sendError);
+      core5.error(`Agent error: ${errorMsg}`);
+      if (trigger.issueNumber && githubToken) {
+        const octokit = github2.getOctokit(githubToken);
+        try {
+          await octokit.rest.issues.createComment({
+            owner: context3.repo.owner,
+            repo: context3.repo.repo,
+            issue_number: trigger.issueNumber,
+            body: `\u{1F916} **OpenClaw Bot**
+
+\u26A0\uFE0F An error occurred while processing this event:
+
+\`\`\`
+${errorMsg}
+\`\`\``
+          });
+        } catch (postError) {
+          core5.error(`Failed to post error comment: ${postError}`);
+        }
+      }
+      throw sendError;
+    }
     client.disconnect();
     client = null;
     if (trigger.issueNumber && !response.includes("HEARTBEAT_OK")) {
       const octokit = github2.getOctokit(githubToken);
       try {
+        const body = response.trim() ? `\u{1F916} **OpenClaw Bot**
+
+${response}` : `\u{1F916} **OpenClaw Bot**
+
+_No response was generated._`;
         await octokit.rest.issues.createComment({
           owner: context3.repo.owner,
           repo: context3.repo.repo,
           issue_number: trigger.issueNumber,
-          body: response
+          body
         });
         core5.info(`Posted to #${trigger.issueNumber}`);
       } catch (error4) {
-        core5.error(`Failed to post: ${error4}`);
+        core5.error(`Failed to post comment: ${error4}`);
       }
     } else if (response.includes("HEARTBEAT_OK")) {
       core5.info("Heartbeat OK \u2014 no action needed");
