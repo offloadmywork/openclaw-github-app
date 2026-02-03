@@ -288,23 +288,162 @@ Make sure:
 
 ## Development
 
-### Building
+### Local Development
 
 ```bash
+# Clone the repository
+git clone https://github.com/offloadmywork/openclaw-github-app.git
+cd openclaw-github-app
+
+# Install dependencies
 npm install
+
+# Build the action
 npm run build
+
+# Type check
+npm run typecheck
 ```
+
+### Building & Publishing
+
+The action uses esbuild to bundle the TypeScript source into `dist/index.js`. When making changes:
+
+1. Edit source files in `src/`
+2. Run `npm run build` to compile
+3. Test the action in a test repository
+4. Commit both source and dist changes
+5. Push to `main` (or create a tagged release)
+
+**Important:** Always commit the `dist/` directory and `node_modules/` with your changes. GitHub Actions need these to run.
+
+### Release Process
+
+```bash
+# After testing your changes
+git add src/ dist/ node_modules/
+git commit -m "feat: your feature description"
+git push origin main
+
+# Create a tagged release (optional, for version pinning)
+git tag -a v1.2.3 -m "Release v1.2.3"
+git push origin v1.2.3
+```
+
+Users can then reference specific versions:
+- `@main` — latest (may have breaking changes)
+- `@v1` — major version (recommended)
+- `@v1.2.3` — exact version (most stable)
 
 ### Testing Locally
 
-You can test the workflow locally, but you'll need:
-1. OpenClaw installed globally (`npm install -g openclaw`)
-2. Set environment variables for inputs
-3. Run `node dist/index.js`
+You can test the action locally:
+
+1. Install OpenClaw globally: `npm install -g openclaw`
+2. Set required environment variables:
+   ```bash
+   export INPUT_API_KEY=your_api_key
+   export INPUT_PROVIDER=anthropic
+   export INPUT_MODEL=claude-sonnet-4-5
+   export GITHUB_TOKEN=your_github_token
+   export GITHUB_REPOSITORY=owner/repo
+   ```
+3. Run: `node dist/index.js`
+
+### Testing in a Repository
+
+Create a test repository and add a workflow file (`.github/workflows/openclaw.yml`) that uses your fork:
+
+```yaml
+- uses: your-username/openclaw-github-app@your-branch
+  with:
+    api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+    github_token: ${{ secrets.GITHUB_TOKEN }}
+```
+
+### Caching
+
+The action automatically caches:
+- **OpenClaw installation** — Speeds up subsequent runs by ~30-60s
+- **Workspace files** — Maintains bot memory and context across runs
+
+Cache keys are stable and version-pinned, so cache invalidation happens automatically when OpenClaw updates.
+
+## Self-Hosting & Forking
+
+Want to customize the bot or host your own version? Here's how:
+
+### 1. Fork the Repository
+
+Click "Fork" on GitHub or:
+```bash
+gh repo fork offloadmywork/openclaw-github-app --clone
+```
+
+### 2. Customize (Optional)
+
+Edit files in `src/` to customize behavior:
+- `src/triggers.ts` — Modify what events trigger the bot
+- `src/index.ts` — Change bot installation/setup logic
+- `src/gateway.ts` — Adjust OpenClaw configuration
+
+Then rebuild:
+```bash
+npm run build
+git add src/ dist/
+git commit -m "feat: custom behavior"
+git push
+```
+
+### 3. Use Your Fork
+
+In your workflows, reference your fork:
+
+```yaml
+- uses: your-username/openclaw-github-app@main
+  with:
+    api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+    github_token: ${{ secrets.GITHUB_TOKEN }}
+```
+
+### 4. Keep Up to Date
+
+Sync your fork periodically:
+```bash
+gh repo sync your-username/openclaw-github-app
+```
+
+Or set up GitHub Actions to auto-sync your fork.
+
+### One-Click Setup
+
+If you forked the repo, you can create a workflow in your fork that automatically sets it up in new repositories:
+
+1. Add `.github/workflows/setup-openclaw.yml` to your fork
+2. Use `workflow_dispatch` to trigger setup
+3. The workflow can commit the OpenClaw workflow file to target repos
+
+This enables "install with one click" for all your repositories.
 
 ## Contributing
 
 This is a thin wrapper — most improvements should go to OpenClaw itself. But wrapper-specific improvements are welcome!
+
+### How to Contribute
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Run `npm run build` and `npm run typecheck`
+5. Test in a real repository
+6. Submit a pull request
+
+### Contribution Areas
+
+- **Performance** — Faster installs, better caching
+- **Features** — New trigger types, configuration options
+- **Documentation** — Clearer guides, more examples
+- **Bug Fixes** — Error handling, edge cases
 
 ## License
 
@@ -312,5 +451,6 @@ MIT
 
 ## Support
 
-- Issues: https://github.com/offloadmywork/openclaw-github-app/issues
-- OpenClaw: https://github.com/openclaw/openclaw
+- **Issues**: https://github.com/offloadmywork/openclaw-github-app/issues
+- **OpenClaw Docs**: https://openclaw.dev
+- **Discord**: Join the OpenClaw community

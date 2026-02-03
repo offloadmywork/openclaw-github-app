@@ -1,5 +1,6 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
+import * as cache from '@actions/cache';
 import * as path from 'path';
 import * as fs from 'fs';
 import { exec } from 'child_process';
@@ -33,26 +34,68 @@ async function run(): Promise<void> {
 
     fs.mkdirSync(workspacePath, { recursive: true });
 
-    // Install OpenClaw
-    core.info('Installing OpenClaw...');
+    // Get npm global prefix and set up paths
+    let npmPrefix = '';
+    let binDir = '';
     try {
-      const { stdout: installOut, stderr: installErr } = await execAsync('npm install -g openclaw@latest --force 2>&1', { timeout: 120000 });
-      core.info(`Install output: ${installOut.trim()}`);
-      if (installErr) core.info(`Install stderr: ${installErr.trim()}`);
-    } catch (error) {
-      core.warning(`OpenClaw install issue: ${error}`);
-    }
-
-    // Fix PATH — npm global bin may not be in PATH on GitHub Actions
-    try {
-      const { stdout: npmPrefix } = await execAsync('npm config get prefix');
-      const binDir = path.join(npmPrefix.trim(), 'bin');
+      const { stdout } = await execAsync('npm config get prefix');
+      npmPrefix = stdout.trim();
+      binDir = path.join(npmPrefix, 'bin');
       if (binDir && !process.env.PATH?.includes(binDir)) {
         process.env.PATH = `${binDir}:${process.env.PATH}`;
         core.info(`Added ${binDir} to PATH`);
       }
     } catch (e) {
       core.warning(`Could not determine npm prefix: ${e}`);
+    }
+
+    // Cache OpenClaw installation
+    const openclawCachePath = path.join(npmPrefix, 'lib', 'node_modules', 'openclaw');
+    const cacheKey = 'openclaw-v1'; // Increment version to bust cache
+    const cachePaths = [openclawCachePath];
+    
+    core.info('Checking for cached OpenClaw installation...');
+    let cacheHit = false;
+    try {
+      const restoredKey = await cache.restoreCache(cachePaths, cacheKey);
+      if (restoredKey) {
+        core.info(`Cache hit! Restored OpenClaw from cache (key: ${restoredKey})`);
+        cacheHit = true;
+        
+        // Verify the installation works
+        try {
+          const { stdout } = await execAsync('openclaw --version');
+          core.info(`Cached OpenClaw version: ${stdout.trim()}`);
+        } catch {
+          core.warning('Cached OpenClaw is not functional, will reinstall');
+          cacheHit = false;
+        }
+      } else {
+        core.info('No cache hit, will install OpenClaw');
+      }
+    } catch (error) {
+      core.warning(`Cache restore failed: ${error}`);
+    }
+
+    // Install OpenClaw if not cached or cache was invalid
+    if (!cacheHit) {
+      core.info('Installing OpenClaw...');
+      try {
+        const { stdout: installOut, stderr: installErr } = await execAsync('npm install -g openclaw@latest --force 2>&1', { timeout: 120000 });
+        core.info(`Install output: ${installOut.trim()}`);
+        if (installErr) core.info(`Install stderr: ${installErr.trim()}`);
+        
+        // Save to cache for next run
+        try {
+          await cache.saveCache(cachePaths, cacheKey);
+          core.info('OpenClaw installation cached successfully');
+        } catch (saveError) {
+          // Cache save errors are not fatal
+          core.warning(`Failed to save cache: ${saveError}`);
+        }
+      } catch (error) {
+        core.warning(`OpenClaw install issue: ${error}`);
+      }
     }
 
     // Debug: check what was installed
