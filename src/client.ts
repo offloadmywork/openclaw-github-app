@@ -243,13 +243,13 @@ export class OpenClawClient {
     const acceptedPromise = new Promise<any>((resolve, reject) => {
       this.pendingRequests.set(id, { resolve, reject, keepAlive: true });
       
-      // Hard timeout – if nothing comes back in 5 min, fail
+      // Hard timeout – if nothing comes back in 8 min, fail (leaves 2 min for cleanup before action hard timeout)
       setTimeout(() => {
         if (this.pendingRequests.has(id)) {
           this.pendingRequests.delete(id);
-          reject(new Error('Agent request timeout after 300s'));
+          reject(new Error('Agent request timeout after 480s (8 minutes)'));
         }
-      }, 300000);
+      }, 480000);
     });
     
     this.send(request);
@@ -260,7 +260,7 @@ export class OpenClawClient {
     
     // Now race: 2nd RPC response  vs  lifecycle end event  vs  timeout
     const timeoutPromise = new Promise<string>((_, reject) =>
-      setTimeout(() => reject(new Error('Agent lifecycle timeout after 300s')), 300000)
+      setTimeout(() => reject(new Error('Agent lifecycle timeout after 480s (8 minutes)')), 480000)
     );
     const lifecycleFallback = this.lifecycleEndPromise.then(() => {
       // If lifecycle fires but we didn't get a 2nd RPC response, use stream buffer

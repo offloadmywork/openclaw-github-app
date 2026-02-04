@@ -161,8 +161,6 @@ async function run(): Promise<void> {
       }
       throw sendError;
     }
-    client.disconnect();
-    client = null;
 
     // Post response to GitHub
     if (trigger.issueNumber && !response.includes('HEARTBEAT_OK')) {
@@ -187,20 +185,52 @@ async function run(): Promise<void> {
       core.info('No issue/PR to post to — response logged above');
     }
 
-    await stopGateway();
+    // Save workspace before cleanup (in finally block)
     await saveWorkspace(workspacePath, repo);
     core.info('=== OpenClaw complete ===');
 
   } catch (error) {
-    if (client) client.disconnect();
-    await stopGateway().catch(() => {});
     const errorMessage = error instanceof Error ? error.message : String(error);
     core.error(`Error details: ${errorMessage}`);
     if (error instanceof Error && error.stack) {
       core.error(`Stack trace: ${error.stack}`);
     }
     core.setFailed(errorMessage);
+    throw error; // Re-throw to be caught by outer handler
+  } finally {
+    // Always cleanup, regardless of success or failure
+    if (client) {
+      try {
+        client.disconnect();
+      } catch (e) {
+        core.warning(`Client disconnect error: ${e}`);
+      }
+    }
+    try {
+      await stopGateway();
+    } catch (e) {
+      core.warning(`Gateway stop error: ${e}`);
+    }
   }
 }
 
-run();
+// Hard timeout wrapper - ensure action exits within 10 minutes
+const HARD_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes
+const timeoutHandle = setTimeout(() => {
+  core.error('⏱️  HARD TIMEOUT: Action exceeded 10 minutes, forcing exit');
+  stopGateway().catch(() => {}).finally(() => {
+    process.exit(1);
+  });
+}, HARD_TIMEOUT_MS);
+
+run()
+  .then(() => {
+    clearTimeout(timeoutHandle);
+    core.info('✅ Action completed successfully');
+    process.exit(0);
+  })
+  .catch((error) => {
+    clearTimeout(timeoutHandle);
+    core.error(`❌ Action failed: ${error}`);
+    process.exit(1);
+  });

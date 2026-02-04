@@ -65942,12 +65942,12 @@ var require_downloadUtils = __commonJS({
     }
     exports2.downloadCacheStorageSDK = downloadCacheStorageSDK;
     var promiseWithTimeout = (timeoutMs, promise) => __awaiter2(void 0, void 0, void 0, function* () {
-      let timeoutHandle;
+      let timeoutHandle2;
       const timeoutPromise = new Promise((resolve2) => {
-        timeoutHandle = setTimeout(() => resolve2("timeout"), timeoutMs);
+        timeoutHandle2 = setTimeout(() => resolve2("timeout"), timeoutMs);
       });
       return Promise.race([promise, timeoutPromise]).then((result) => {
-        clearTimeout(timeoutHandle);
+        clearTimeout(timeoutHandle2);
         return result;
       });
     });
@@ -72304,6 +72304,26 @@ I help maintain this repository by:
 
 ## Personality
 I am helpful, concise, and focused on getting things done.
+
+## Response Guidelines \u2014 CRITICAL
+
+**NEVER show internal reasoning or thinking steps in your responses.**
+
+When responding to issues or PRs:
+- Give **clean, direct, helpful answers only**
+- No "Let me check...", "I can see...", "I'll try to..." narration
+- No describing what you're about to do \u2014 just do it and report results
+- Format responses in clean GitHub markdown
+- Be concise and to the point
+- If you need to investigate, do it silently and present only findings
+
+**Example BAD response:**
+> "I can see the comment from @user! Let me check the GitHub issue to understand the context better. I can see that the web fetch returned... Let me try to check if there's a GitHub CLI available..."
+
+**Example GOOD response:**
+> "Based on the issue discussion, here's what I found: [direct answer]. The relevant code is in \`file.ts\` lines 42-58."
+
+Remember: Users see your final response as a GitHub comment. Make it clean, professional, and valuable.
 `);
   }
   if (!fs.existsSync(memoryPath)) {
@@ -72775,15 +72795,15 @@ var OpenClawClient = class {
       setTimeout(() => {
         if (this.pendingRequests.has(id)) {
           this.pendingRequests.delete(id);
-          reject(new Error("Agent request timeout after 300s"));
+          reject(new Error("Agent request timeout after 480s (8 minutes)"));
         }
-      }, 3e5);
+      }, 48e4);
     });
     this.send(request);
     const acceptPayload = await acceptedPromise;
     core4.info(`Agent request accepted (runId=${acceptPayload?.runId ?? "unknown"}), waiting for completion...`);
     const timeoutPromise = new Promise(
-      (_, reject) => setTimeout(() => reject(new Error("Agent lifecycle timeout after 300s")), 3e5)
+      (_, reject) => setTimeout(() => reject(new Error("Agent lifecycle timeout after 480s (8 minutes)")), 48e4)
     );
     const lifecycleFallback = this.lifecycleEndPromise.then(() => {
       const streamed = this.streamBuffer.join("");
@@ -73140,8 +73160,6 @@ ${errorMsg}
       }
       throw sendError;
     }
-    client.disconnect();
-    client = null;
     if (trigger.issueNumber && !response.includes("HEARTBEAT_OK")) {
       const octokit = github2.getOctokit(githubToken);
       try {
@@ -73165,22 +73183,48 @@ _No response was generated._`;
     } else {
       core5.info("No issue/PR to post to \u2014 response logged above");
     }
-    await stopGateway();
     await saveWorkspace(workspacePath, repo);
     core5.info("=== OpenClaw complete ===");
   } catch (error4) {
-    if (client) client.disconnect();
-    await stopGateway().catch(() => {
-    });
     const errorMessage = error4 instanceof Error ? error4.message : String(error4);
     core5.error(`Error details: ${errorMessage}`);
     if (error4 instanceof Error && error4.stack) {
       core5.error(`Stack trace: ${error4.stack}`);
     }
     core5.setFailed(errorMessage);
+    throw error4;
+  } finally {
+    if (client) {
+      try {
+        client.disconnect();
+      } catch (e) {
+        core5.warning(`Client disconnect error: ${e}`);
+      }
+    }
+    try {
+      await stopGateway();
+    } catch (e) {
+      core5.warning(`Gateway stop error: ${e}`);
+    }
   }
 }
-run();
+var HARD_TIMEOUT_MS = 10 * 60 * 1e3;
+var timeoutHandle = setTimeout(() => {
+  core5.error("\u23F1\uFE0F  HARD TIMEOUT: Action exceeded 10 minutes, forcing exit");
+  stopGateway().catch(() => {
+  }).finally(() => {
+    process.exit(1);
+  });
+}, HARD_TIMEOUT_MS);
+run().then(() => {
+  clearTimeout(timeoutHandle);
+  core5.info("\u2705 Action completed successfully");
+  process.exit(0);
+}).catch((error4) => {
+  clearTimeout(timeoutHandle);
+  core5.error(`\u274C Action failed: ${error4}`);
+  process.exit(1);
+});
 /*! Bundled license information:
 
 undici/lib/fetch/body.js:
