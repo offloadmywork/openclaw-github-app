@@ -426,18 +426,18 @@ var require_tunnel = __commonJS({
             res.statusCode
           );
           socket.destroy();
-          var error4 = new Error("tunneling socket could not be established, statusCode=" + res.statusCode);
-          error4.code = "ECONNRESET";
-          options.request.emit("error", error4);
+          var error5 = new Error("tunneling socket could not be established, statusCode=" + res.statusCode);
+          error5.code = "ECONNRESET";
+          options.request.emit("error", error5);
           self2.removeSocket(placeholder);
           return;
         }
         if (head.length > 0) {
           debug3("got illegal response body from proxy");
           socket.destroy();
-          var error4 = new Error("got illegal response body from proxy");
-          error4.code = "ECONNRESET";
-          options.request.emit("error", error4);
+          var error5 = new Error("got illegal response body from proxy");
+          error5.code = "ECONNRESET";
+          options.request.emit("error", error5);
           self2.removeSocket(placeholder);
           return;
         }
@@ -452,9 +452,9 @@ var require_tunnel = __commonJS({
           cause.message,
           cause.stack
         );
-        var error4 = new Error("tunneling socket could not be established, cause=" + cause.message);
-        error4.code = "ECONNRESET";
-        options.request.emit("error", error4);
+        var error5 = new Error("tunneling socket could not be established, cause=" + cause.message);
+        error5.code = "ECONNRESET";
+        options.request.emit("error", error5);
         self2.removeSocket(placeholder);
       }
     };
@@ -5582,7 +5582,7 @@ Content-Type: ${value.type || "application/octet-stream"}\r
         throw new TypeError("Body is unusable");
       }
       const promise = createDeferredPromise();
-      const errorSteps = (error4) => promise.reject(error4);
+      const errorSteps = (error5) => promise.reject(error5);
       const successSteps = (data) => {
         try {
           promise.resolve(convertBytesToJSValue(data));
@@ -5868,16 +5868,16 @@ var require_request = __commonJS({
           this.onError(err);
         }
       }
-      onError(error4) {
+      onError(error5) {
         this.onFinally();
         if (channels.error.hasSubscribers) {
-          channels.error.publish({ request: this, error: error4 });
+          channels.error.publish({ request: this, error: error5 });
         }
         if (this.aborted) {
           return;
         }
         this.aborted = true;
-        return this[kHandler].onError(error4);
+        return this[kHandler].onError(error5);
       }
       onFinally() {
         if (this.errorHandler) {
@@ -6740,8 +6740,8 @@ var require_RedirectHandler = __commonJS({
       onUpgrade(statusCode, headers, socket) {
         this.handler.onUpgrade(statusCode, headers, socket);
       }
-      onError(error4) {
-        this.handler.onError(error4);
+      onError(error5) {
+        this.handler.onError(error5);
       }
       onHeaders(statusCode, headers, resume, statusText) {
         this.location = this.history.length >= this.maxRedirections || util.isDisturbed(this.opts.body) ? null : parseLocation(statusCode, headers);
@@ -8882,7 +8882,7 @@ var require_pool = __commonJS({
         this[kOptions] = { ...util.deepClone(options), connect, allowH2 };
         this[kOptions].interceptors = options.interceptors ? { ...options.interceptors } : void 0;
         this[kFactory] = factory;
-        this.on("connectionError", (origin2, targets, error4) => {
+        this.on("connectionError", (origin2, targets, error5) => {
           for (const target of targets) {
             const idx = this[kClients].indexOf(target);
             if (idx !== -1) {
@@ -10491,13 +10491,13 @@ var require_mock_utils = __commonJS({
       if (mockDispatch2.data.callback) {
         mockDispatch2.data = { ...mockDispatch2.data, ...mockDispatch2.data.callback(opts) };
       }
-      const { data: { statusCode, data, headers, trailers, error: error4 }, delay, persist } = mockDispatch2;
+      const { data: { statusCode, data, headers, trailers, error: error5 }, delay, persist } = mockDispatch2;
       const { timesInvoked, times } = mockDispatch2;
       mockDispatch2.consumed = !persist && timesInvoked >= times;
       mockDispatch2.pending = timesInvoked < times;
-      if (error4 !== null) {
+      if (error5 !== null) {
         deleteMockDispatch(this[kDispatches], key);
-        handler.onError(error4);
+        handler.onError(error5);
         return true;
       }
       if (typeof delay === "number" && delay > 0) {
@@ -10535,19 +10535,19 @@ var require_mock_utils = __commonJS({
         if (agent.isMockActive) {
           try {
             mockDispatch.call(this, opts, handler);
-          } catch (error4) {
-            if (error4 instanceof MockNotMatchedError) {
+          } catch (error5) {
+            if (error5 instanceof MockNotMatchedError) {
               const netConnect = agent[kGetNetConnect]();
               if (netConnect === false) {
-                throw new MockNotMatchedError(`${error4.message}: subsequent request to origin ${origin} was not allowed (net.connect disabled)`);
+                throw new MockNotMatchedError(`${error5.message}: subsequent request to origin ${origin} was not allowed (net.connect disabled)`);
               }
               if (checkNetConnect(netConnect, origin)) {
                 originalDispatch.call(this, opts, handler);
               } else {
-                throw new MockNotMatchedError(`${error4.message}: subsequent request to origin ${origin} was not allowed (net.connect is not enabled for this origin)`);
+                throw new MockNotMatchedError(`${error5.message}: subsequent request to origin ${origin} was not allowed (net.connect is not enabled for this origin)`);
               }
             } else {
-              throw error4;
+              throw error5;
             }
           }
         } else {
@@ -10710,11 +10710,11 @@ var require_mock_interceptor = __commonJS({
       /**
        * Mock an undici request with a defined error.
        */
-      replyWithError(error4) {
-        if (typeof error4 === "undefined") {
+      replyWithError(error5) {
+        if (typeof error5 === "undefined") {
           throw new InvalidArgumentError("error must be defined");
         }
-        const newMockDispatch = addMockDispatch(this[kDispatches], this[kDispatchKey], { error: error4 });
+        const newMockDispatch = addMockDispatch(this[kDispatches], this[kDispatchKey], { error: error5 });
         return new MockScope(newMockDispatch);
       }
       /**
@@ -13041,17 +13041,17 @@ var require_fetch = __commonJS({
         this.emit("terminated", reason);
       }
       // https://fetch.spec.whatwg.org/#fetch-controller-abort
-      abort(error4) {
+      abort(error5) {
         if (this.state !== "ongoing") {
           return;
         }
         this.state = "aborted";
-        if (!error4) {
-          error4 = new DOMException2("The operation was aborted.", "AbortError");
+        if (!error5) {
+          error5 = new DOMException2("The operation was aborted.", "AbortError");
         }
-        this.serializedAbortReason = error4;
-        this.connection?.destroy(error4);
-        this.emit("terminated", error4);
+        this.serializedAbortReason = error5;
+        this.connection?.destroy(error5);
+        this.emit("terminated", error5);
       }
     };
     function fetch(input, init = {}) {
@@ -13155,13 +13155,13 @@ var require_fetch = __commonJS({
         performance.markResourceTiming(timingInfo, originalURL.href, initiatorType, globalThis2, cacheState);
       }
     }
-    function abortFetch(p, request, responseObject, error4) {
-      if (!error4) {
-        error4 = new DOMException2("The operation was aborted.", "AbortError");
+    function abortFetch(p, request, responseObject, error5) {
+      if (!error5) {
+        error5 = new DOMException2("The operation was aborted.", "AbortError");
       }
-      p.reject(error4);
+      p.reject(error5);
       if (request.body != null && isReadable(request.body?.stream)) {
-        request.body.stream.cancel(error4).catch((err) => {
+        request.body.stream.cancel(error5).catch((err) => {
           if (err.code === "ERR_INVALID_STATE") {
             return;
           }
@@ -13173,7 +13173,7 @@ var require_fetch = __commonJS({
       }
       const response = responseObject[kState];
       if (response.body != null && isReadable(response.body?.stream)) {
-        response.body.stream.cancel(error4).catch((err) => {
+        response.body.stream.cancel(error5).catch((err) => {
           if (err.code === "ERR_INVALID_STATE") {
             return;
           }
@@ -13953,13 +13953,13 @@ var require_fetch = __commonJS({
               fetchParams.controller.ended = true;
               this.body.push(null);
             },
-            onError(error4) {
+            onError(error5) {
               if (this.abort) {
                 fetchParams.controller.off("terminated", this.abort);
               }
-              this.body?.destroy(error4);
-              fetchParams.controller.terminate(error4);
-              reject(error4);
+              this.body?.destroy(error5);
+              fetchParams.controller.terminate(error5);
+              reject(error5);
             },
             onUpgrade(status, headersList, socket) {
               if (status !== 101) {
@@ -14425,8 +14425,8 @@ var require_util4 = __commonJS({
                   }
                   fr[kResult] = result;
                   fireAProgressEvent("load", fr);
-                } catch (error4) {
-                  fr[kError] = error4;
+                } catch (error5) {
+                  fr[kError] = error5;
                   fireAProgressEvent("error", fr);
                 }
                 if (fr[kState] !== "loading") {
@@ -14435,13 +14435,13 @@ var require_util4 = __commonJS({
               });
               break;
             }
-          } catch (error4) {
+          } catch (error5) {
             if (fr[kAborted]) {
               return;
             }
             queueMicrotask(() => {
               fr[kState] = "done";
-              fr[kError] = error4;
+              fr[kError] = error5;
               fireAProgressEvent("error", fr);
               if (fr[kState] !== "loading") {
                 fireAProgressEvent("loadend", fr);
@@ -16441,11 +16441,11 @@ var require_connection = __commonJS({
         });
       }
     }
-    function onSocketError(error4) {
+    function onSocketError(error5) {
       const { ws } = this;
       ws[kReadyState] = states.CLOSING;
       if (channels.socketError.hasSubscribers) {
-        channels.socketError.publish(error4);
+        channels.socketError.publish(error5);
       }
       this.destroy();
     }
@@ -17589,12 +17589,12 @@ var require_lib = __commonJS({
             throw new Error("Client has already been disposed.");
           }
           const parsedUrl = new URL(requestUrl);
-          let info7 = this._prepareRequest(verb, parsedUrl, headers);
+          let info8 = this._prepareRequest(verb, parsedUrl, headers);
           const maxTries = this._allowRetries && RetryableHttpVerbs.includes(verb) ? this._maxRetries + 1 : 1;
           let numTries = 0;
           let response;
           do {
-            response = yield this.requestRaw(info7, data);
+            response = yield this.requestRaw(info8, data);
             if (response && response.message && response.message.statusCode === HttpCodes.Unauthorized) {
               let authenticationHandler;
               for (const handler of this.handlers) {
@@ -17604,7 +17604,7 @@ var require_lib = __commonJS({
                 }
               }
               if (authenticationHandler) {
-                return authenticationHandler.handleAuthentication(this, info7, data);
+                return authenticationHandler.handleAuthentication(this, info8, data);
               } else {
                 return response;
               }
@@ -17627,8 +17627,8 @@ var require_lib = __commonJS({
                   }
                 }
               }
-              info7 = this._prepareRequest(verb, parsedRedirectUrl, headers);
-              response = yield this.requestRaw(info7, data);
+              info8 = this._prepareRequest(verb, parsedRedirectUrl, headers);
+              response = yield this.requestRaw(info8, data);
               redirectsRemaining--;
             }
             if (!response.message.statusCode || !HttpResponseRetryCodes.includes(response.message.statusCode)) {
@@ -17657,7 +17657,7 @@ var require_lib = __commonJS({
        * @param info
        * @param data
        */
-      requestRaw(info7, data) {
+      requestRaw(info8, data) {
         return __awaiter2(this, void 0, void 0, function* () {
           return new Promise((resolve2, reject) => {
             function callbackForResult(err, res) {
@@ -17669,7 +17669,7 @@ var require_lib = __commonJS({
                 resolve2(res);
               }
             }
-            this.requestRawWithCallback(info7, data, callbackForResult);
+            this.requestRawWithCallback(info8, data, callbackForResult);
           });
         });
       }
@@ -17679,12 +17679,12 @@ var require_lib = __commonJS({
        * @param data
        * @param onResult
        */
-      requestRawWithCallback(info7, data, onResult) {
+      requestRawWithCallback(info8, data, onResult) {
         if (typeof data === "string") {
-          if (!info7.options.headers) {
-            info7.options.headers = {};
+          if (!info8.options.headers) {
+            info8.options.headers = {};
           }
-          info7.options.headers["Content-Length"] = Buffer.byteLength(data, "utf8");
+          info8.options.headers["Content-Length"] = Buffer.byteLength(data, "utf8");
         }
         let callbackCalled = false;
         function handleResult(err, res) {
@@ -17693,7 +17693,7 @@ var require_lib = __commonJS({
             onResult(err, res);
           }
         }
-        const req = info7.httpModule.request(info7.options, (msg) => {
+        const req = info8.httpModule.request(info8.options, (msg) => {
           const res = new HttpClientResponse(msg);
           handleResult(void 0, res);
         });
@@ -17705,7 +17705,7 @@ var require_lib = __commonJS({
           if (socket) {
             socket.end();
           }
-          handleResult(new Error(`Request timeout: ${info7.options.path}`));
+          handleResult(new Error(`Request timeout: ${info8.options.path}`));
         });
         req.on("error", function(err) {
           handleResult(err);
@@ -17741,27 +17741,27 @@ var require_lib = __commonJS({
         return this._getProxyAgentDispatcher(parsedUrl, proxyUrl);
       }
       _prepareRequest(method, requestUrl, headers) {
-        const info7 = {};
-        info7.parsedUrl = requestUrl;
-        const usingSsl = info7.parsedUrl.protocol === "https:";
-        info7.httpModule = usingSsl ? https : http;
+        const info8 = {};
+        info8.parsedUrl = requestUrl;
+        const usingSsl = info8.parsedUrl.protocol === "https:";
+        info8.httpModule = usingSsl ? https : http;
         const defaultPort = usingSsl ? 443 : 80;
-        info7.options = {};
-        info7.options.host = info7.parsedUrl.hostname;
-        info7.options.port = info7.parsedUrl.port ? parseInt(info7.parsedUrl.port) : defaultPort;
-        info7.options.path = (info7.parsedUrl.pathname || "") + (info7.parsedUrl.search || "");
-        info7.options.method = method;
-        info7.options.headers = this._mergeHeaders(headers);
+        info8.options = {};
+        info8.options.host = info8.parsedUrl.hostname;
+        info8.options.port = info8.parsedUrl.port ? parseInt(info8.parsedUrl.port) : defaultPort;
+        info8.options.path = (info8.parsedUrl.pathname || "") + (info8.parsedUrl.search || "");
+        info8.options.method = method;
+        info8.options.headers = this._mergeHeaders(headers);
         if (this.userAgent != null) {
-          info7.options.headers["user-agent"] = this.userAgent;
+          info8.options.headers["user-agent"] = this.userAgent;
         }
-        info7.options.agent = this._getAgent(info7.parsedUrl);
+        info8.options.agent = this._getAgent(info8.parsedUrl);
         if (this.handlers) {
           for (const handler of this.handlers) {
-            handler.prepareRequest(info7.options);
+            handler.prepareRequest(info8.options);
           }
         }
-        return info7;
+        return info8;
       }
       _mergeHeaders(headers) {
         if (this.requestOptions && this.requestOptions.headers) {
@@ -18077,12 +18077,12 @@ var require_oidc_utils = __commonJS({
         var _a;
         return __awaiter2(this, void 0, void 0, function* () {
           const httpclient = _OidcClient.createHttpClient();
-          const res = yield httpclient.getJson(id_token_url).catch((error4) => {
+          const res = yield httpclient.getJson(id_token_url).catch((error5) => {
             throw new Error(`Failed to get ID Token. 
  
-        Error Code : ${error4.statusCode}
+        Error Code : ${error5.statusCode}
  
-        Error Message: ${error4.message}`);
+        Error Message: ${error5.message}`);
           });
           const id_token = (_a = res.result) === null || _a === void 0 ? void 0 : _a.value;
           if (!id_token) {
@@ -18103,8 +18103,8 @@ var require_oidc_utils = __commonJS({
             const id_token = yield _OidcClient.getCall(id_token_url);
             (0, core_1.setSecret)(id_token);
             return id_token;
-          } catch (error4) {
-            throw new Error(`Error message: ${error4.message}`);
+          } catch (error5) {
+            throw new Error(`Error message: ${error5.message}`);
           }
         });
       }
@@ -19226,7 +19226,7 @@ var require_toolrunner = __commonJS({
               this._debug(`STDIO streams have closed for tool '${this.toolPath}'`);
               state.CheckComplete();
             });
-            state.on("done", (error4, exitCode) => {
+            state.on("done", (error5, exitCode) => {
               if (stdbuffer.length > 0) {
                 this.emit("stdline", stdbuffer);
               }
@@ -19234,8 +19234,8 @@ var require_toolrunner = __commonJS({
                 this.emit("errline", errbuffer);
               }
               cp.removeAllListeners();
-              if (error4) {
-                reject(error4);
+              if (error5) {
+                reject(error5);
               } else {
                 resolve2(exitCode);
               }
@@ -19330,14 +19330,14 @@ var require_toolrunner = __commonJS({
         this.emit("debug", message);
       }
       _setResult() {
-        let error4;
+        let error5;
         if (this.processExited) {
           if (this.processError) {
-            error4 = new Error(`There was an error when attempting to execute the process '${this.toolPath}'. This may indicate the process failed to start. Error: ${this.processError}`);
+            error5 = new Error(`There was an error when attempting to execute the process '${this.toolPath}'. This may indicate the process failed to start. Error: ${this.processError}`);
           } else if (this.processExitCode !== 0 && !this.options.ignoreReturnCode) {
-            error4 = new Error(`The process '${this.toolPath}' failed with exit code ${this.processExitCode}`);
+            error5 = new Error(`The process '${this.toolPath}' failed with exit code ${this.processExitCode}`);
           } else if (this.processStderr && this.options.failOnStdErr) {
-            error4 = new Error(`The process '${this.toolPath}' failed because one or more lines were written to the STDERR stream`);
+            error5 = new Error(`The process '${this.toolPath}' failed because one or more lines were written to the STDERR stream`);
           }
         }
         if (this.timeout) {
@@ -19345,7 +19345,7 @@ var require_toolrunner = __commonJS({
           this.timeout = null;
         }
         this.done = true;
-        this.emit("done", error4, this.processExitCode);
+        this.emit("done", error5, this.processExitCode);
       }
       static HandleTimeout(state) {
         if (state.done) {
@@ -19728,7 +19728,7 @@ Support boolean input list: \`true | True | TRUE | false | False | FALSE\``);
     exports2.setCommandEcho = setCommandEcho;
     function setFailed2(message) {
       process.exitCode = ExitCode.Failure;
-      error4(message);
+      error5(message);
     }
     exports2.setFailed = setFailed2;
     function isDebug() {
@@ -19739,22 +19739,22 @@ Support boolean input list: \`true | True | TRUE | false | False | FALSE\``);
       (0, command_1.issueCommand)("debug", {}, message);
     }
     exports2.debug = debug3;
-    function error4(message, properties = {}) {
+    function error5(message, properties = {}) {
       (0, command_1.issueCommand)("error", (0, utils_1.toCommandProperties)(properties), message instanceof Error ? message.toString() : message);
     }
-    exports2.error = error4;
-    function warning7(message, properties = {}) {
+    exports2.error = error5;
+    function warning8(message, properties = {}) {
       (0, command_1.issueCommand)("warning", (0, utils_1.toCommandProperties)(properties), message instanceof Error ? message.toString() : message);
     }
-    exports2.warning = warning7;
+    exports2.warning = warning8;
     function notice(message, properties = {}) {
       (0, command_1.issueCommand)("notice", (0, utils_1.toCommandProperties)(properties), message instanceof Error ? message.toString() : message);
     }
     exports2.notice = notice;
-    function info7(message) {
+    function info8(message) {
       process.stdout.write(message + os.EOL);
     }
-    exports2.info = info7;
+    exports2.info = info8;
     function startGroup(name) {
       (0, command_1.issue)("group", name);
     }
@@ -20044,8 +20044,8 @@ var require_add = __commonJS({
       }
       if (kind === "error") {
         hook = function(method, options) {
-          return Promise.resolve().then(method.bind(null, options)).catch(function(error4) {
-            return orig(error4, options);
+          return Promise.resolve().then(method.bind(null, options)).catch(function(error5) {
+            return orig(error5, options);
           });
         };
       }
@@ -20777,7 +20777,7 @@ var require_dist_node5 = __commonJS({
         }
         if (status >= 400) {
           const data = await getResponseData(response);
-          const error4 = new import_request_error.RequestError(toErrorMessage(data), status, {
+          const error5 = new import_request_error.RequestError(toErrorMessage(data), status, {
             response: {
               url,
               status,
@@ -20786,7 +20786,7 @@ var require_dist_node5 = __commonJS({
             },
             request: requestOptions
           });
-          throw error4;
+          throw error5;
         }
         return parseSuccessResponseBody ? await getResponseData(response) : response.body;
       }).then((data) => {
@@ -20796,17 +20796,17 @@ var require_dist_node5 = __commonJS({
           headers,
           data
         };
-      }).catch((error4) => {
-        if (error4 instanceof import_request_error.RequestError)
-          throw error4;
-        else if (error4.name === "AbortError")
-          throw error4;
-        let message = error4.message;
-        if (error4.name === "TypeError" && "cause" in error4) {
-          if (error4.cause instanceof Error) {
-            message = error4.cause.message;
-          } else if (typeof error4.cause === "string") {
-            message = error4.cause;
+      }).catch((error5) => {
+        if (error5 instanceof import_request_error.RequestError)
+          throw error5;
+        else if (error5.name === "AbortError")
+          throw error5;
+        let message = error5.message;
+        if (error5.name === "TypeError" && "cause" in error5) {
+          if (error5.cause instanceof Error) {
+            message = error5.cause.message;
+          } else if (typeof error5.cause === "string") {
+            message = error5.cause;
           }
         }
         throw new import_request_error.RequestError(message, 500, {
@@ -23478,9 +23478,9 @@ var require_dist_node10 = __commonJS({
                 /<([^<>]+)>;\s*rel="next"/
               ) || [])[1];
               return { value: normalizedResponse };
-            } catch (error4) {
-              if (error4.status !== 409)
-                throw error4;
+            } catch (error5) {
+              if (error5.status !== 409)
+                throw error5;
               url = "";
               return {
                 value: {
@@ -23914,7 +23914,7 @@ var require_internal_glob_options_helper = __commonJS({
     };
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.getOptions = void 0;
-    var core8 = __importStar2(require_core());
+    var core9 = __importStar2(require_core());
     function getOptions(copy) {
       const result = {
         followSymbolicLinks: true,
@@ -23924,15 +23924,15 @@ var require_internal_glob_options_helper = __commonJS({
       if (copy) {
         if (typeof copy.followSymbolicLinks === "boolean") {
           result.followSymbolicLinks = copy.followSymbolicLinks;
-          core8.debug(`followSymbolicLinks '${result.followSymbolicLinks}'`);
+          core9.debug(`followSymbolicLinks '${result.followSymbolicLinks}'`);
         }
         if (typeof copy.implicitDescendants === "boolean") {
           result.implicitDescendants = copy.implicitDescendants;
-          core8.debug(`implicitDescendants '${result.implicitDescendants}'`);
+          core9.debug(`implicitDescendants '${result.implicitDescendants}'`);
         }
         if (typeof copy.omitBrokenSymbolicLinks === "boolean") {
           result.omitBrokenSymbolicLinks = copy.omitBrokenSymbolicLinks;
-          core8.debug(`omitBrokenSymbolicLinks '${result.omitBrokenSymbolicLinks}'`);
+          core9.debug(`omitBrokenSymbolicLinks '${result.omitBrokenSymbolicLinks}'`);
         }
       }
       return result;
@@ -25389,7 +25389,7 @@ var require_internal_globber = __commonJS({
     };
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.DefaultGlobber = void 0;
-    var core8 = __importStar2(require_core());
+    var core9 = __importStar2(require_core());
     var fs5 = __importStar2(require("fs"));
     var globOptionsHelper = __importStar2(require_internal_glob_options_helper());
     var path4 = __importStar2(require("path"));
@@ -25440,7 +25440,7 @@ var require_internal_globber = __commonJS({
           }
           const stack = [];
           for (const searchPath of patternHelper.getSearchPaths(patterns)) {
-            core8.debug(`Search path '${searchPath}'`);
+            core9.debug(`Search path '${searchPath}'`);
             try {
               yield __await2(fs5.promises.lstat(searchPath));
             } catch (err) {
@@ -25512,7 +25512,7 @@ var require_internal_globber = __commonJS({
             } catch (err) {
               if (err.code === "ENOENT") {
                 if (options.omitBrokenSymbolicLinks) {
-                  core8.debug(`Broken symlink '${item.path}'`);
+                  core9.debug(`Broken symlink '${item.path}'`);
                   return void 0;
                 }
                 throw new Error(`No information found for the path '${item.path}'. This may indicate a broken symbolic link.`);
@@ -25528,7 +25528,7 @@ var require_internal_globber = __commonJS({
               traversalChain.pop();
             }
             if (traversalChain.some((x) => x === realPath)) {
-              core8.debug(`Symlink cycle detected for path '${item.path}' and realpath '${realPath}'`);
+              core9.debug(`Symlink cycle detected for path '${item.path}' and realpath '${realPath}'`);
               return void 0;
             }
             traversalChain.push(realPath);
@@ -26852,7 +26852,7 @@ var require_cacheUtils = __commonJS({
     };
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.getRuntimeToken = exports2.getCacheVersion = exports2.assertDefined = exports2.getGnuTarPathOnWindows = exports2.getCacheFileName = exports2.getCompressionMethod = exports2.unlinkFile = exports2.resolvePaths = exports2.getArchiveFileSizeInBytes = exports2.createTempDirectory = void 0;
-    var core8 = __importStar2(require_core());
+    var core9 = __importStar2(require_core());
     var exec2 = __importStar2(require_exec());
     var glob = __importStar2(require_glob());
     var io = __importStar2(require_io());
@@ -26905,7 +26905,7 @@ var require_cacheUtils = __commonJS({
             _e = false;
             const file = _c;
             const relativeFile = path4.relative(workspace, file).replace(new RegExp(`\\${path4.sep}`, "g"), "/");
-            core8.debug(`Matched: ${relativeFile}`);
+            core9.debug(`Matched: ${relativeFile}`);
             if (relativeFile === "") {
               paths.push(".");
             } else {
@@ -26935,7 +26935,7 @@ var require_cacheUtils = __commonJS({
       return __awaiter2(this, void 0, void 0, function* () {
         let versionOutput = "";
         additionalArgs.push("--version");
-        core8.debug(`Checking ${app} ${additionalArgs.join(" ")}`);
+        core9.debug(`Checking ${app} ${additionalArgs.join(" ")}`);
         try {
           yield exec2.exec(`${app}`, additionalArgs, {
             ignoreReturnCode: true,
@@ -26946,10 +26946,10 @@ var require_cacheUtils = __commonJS({
             }
           });
         } catch (err) {
-          core8.debug(err.message);
+          core9.debug(err.message);
         }
         versionOutput = versionOutput.trim();
-        core8.debug(versionOutput);
+        core9.debug(versionOutput);
         return versionOutput;
       });
     }
@@ -26957,7 +26957,7 @@ var require_cacheUtils = __commonJS({
       return __awaiter2(this, void 0, void 0, function* () {
         const versionOutput = yield getVersion("zstd", ["--quiet"]);
         const version = semver.clean(versionOutput);
-        core8.debug(`zstd version: ${version}`);
+        core9.debug(`zstd version: ${version}`);
         if (versionOutput === "") {
           return constants_1.CompressionMethod.Gzip;
         } else {
@@ -27243,8 +27243,8 @@ function __read(o, n) {
   var i = m.call(o), r, ar = [], e;
   try {
     while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
-  } catch (error4) {
-    e = { error: error4 };
+  } catch (error5) {
+    e = { error: error5 };
   } finally {
     try {
       if (r && !r.done && (m = i["return"])) m.call(i);
@@ -27494,9 +27494,9 @@ var init_tslib_es6 = __esm({
       };
       return ownKeys(o);
     };
-    _SuppressedError = typeof SuppressedError === "function" ? SuppressedError : function(error4, suppressed, message) {
+    _SuppressedError = typeof SuppressedError === "function" ? SuppressedError : function(error5, suppressed, message) {
       var e = new Error(message);
-      return e.name = "SuppressedError", e.error = error4, e.suppressed = suppressed, e;
+      return e.name = "SuppressedError", e.error = error5, e.suppressed = suppressed, e;
     };
     tslib_es6_default = {
       __extends,
@@ -29843,14 +29843,14 @@ var require_browser = __commonJS({
         } else {
           exports2.storage.removeItem("debug");
         }
-      } catch (error4) {
+      } catch (error5) {
       }
     }
     function load2() {
       let r;
       try {
         r = exports2.storage.getItem("debug") || exports2.storage.getItem("DEBUG");
-      } catch (error4) {
+      } catch (error5) {
       }
       if (!r && typeof process !== "undefined" && "env" in process) {
         r = process.env.DEBUG;
@@ -29860,7 +29860,7 @@ var require_browser = __commonJS({
     function localstorage() {
       try {
         return localStorage;
-      } catch (error4) {
+      } catch (error5) {
       }
     }
     module2.exports = require_common()(exports2);
@@ -29868,8 +29868,8 @@ var require_browser = __commonJS({
     formatters.j = function(v) {
       try {
         return JSON.stringify(v);
-      } catch (error4) {
-        return "[UnexpectedJSONParseError]: " + error4.message;
+      } catch (error5) {
+        return "[UnexpectedJSONParseError]: " + error5.message;
       }
     };
   }
@@ -29974,7 +29974,7 @@ var require_node = __commonJS({
           221
         ];
       }
-    } catch (error4) {
+    } catch (error5) {
     }
     exports2.inspectOpts = Object.keys(process.env).filter((key) => {
       return /^debug_/i.test(key);
@@ -31164,11 +31164,11 @@ var require_checkInsecureConnection = __commonJS({
       return false;
     }
     function emitInsecureConnectionWarning() {
-      const warning7 = "Sending token over insecure transport. Assume any token issued is compromised.";
-      log_js_1.logger.warning(warning7);
+      const warning8 = "Sending token over insecure transport. Assume any token issued is compromised.";
+      log_js_1.logger.warning(warning8);
       if (typeof process?.emitWarning === "function" && !insecureConnectionWarningEmmitted) {
         insecureConnectionWarningEmmitted = true;
-        process.emitWarning(warning7);
+        process.emitWarning(warning8);
       }
     }
     function ensureSecureConnection(request, options) {
@@ -31504,7 +31504,7 @@ var require_sendRequest = __commonJS({
         try {
           JSON.parse(body);
           return "application/json";
-        } catch (error4) {
+        } catch (error5) {
           return void 0;
         }
       }
@@ -31576,9 +31576,9 @@ var require_sendRequest = __commonJS({
       }
       try {
         return bodyToParse ? JSON.parse(bodyToParse) : void 0;
-      } catch (error4) {
+      } catch (error5) {
         if (firstType === "application/json") {
-          throw createParseError(response, error4);
+          throw createParseError(response, error5);
         }
         return String(bodyToParse);
       }
@@ -33168,14 +33168,14 @@ var require_tracingPolicy = __commonJS({
         return void 0;
       }
     }
-    function tryProcessError(span, error4) {
+    function tryProcessError(span, error5) {
       try {
         span.setStatus({
           status: "error",
-          error: (0, core_util_1.isError)(error4) ? error4 : void 0
+          error: (0, core_util_1.isError)(error5) ? error5 : void 0
         });
-        if ((0, restError_js_1.isRestError)(error4) && error4.statusCode) {
-          span.setAttribute("http.status_code", error4.statusCode);
+        if ((0, restError_js_1.isRestError)(error5) && error5.statusCode) {
+          span.setAttribute("http.status_code", error5.statusCode);
         }
         span.end();
       } catch (e) {
@@ -33631,9 +33631,9 @@ var require_bearerTokenAuthenticationPolicy = __commonJS({
             logger
           });
           let response;
-          let error4;
+          let error5;
           let shouldSendRequest;
-          [response, error4] = await trySendRequest(request, next);
+          [response, error5] = await trySendRequest(request, next);
           if (isChallengeResponse(response)) {
             let claims = getCaeChallengeClaims(response.headers.get("WWW-Authenticate"));
             if (claims) {
@@ -33652,7 +33652,7 @@ var require_bearerTokenAuthenticationPolicy = __commonJS({
                 logger
               }, parsedClaim);
               if (shouldSendRequest) {
-                [response, error4] = await trySendRequest(request, next);
+                [response, error5] = await trySendRequest(request, next);
               }
             } else if (callbacks.authorizeRequestOnChallenge) {
               shouldSendRequest = await callbacks.authorizeRequestOnChallenge({
@@ -33663,7 +33663,7 @@ var require_bearerTokenAuthenticationPolicy = __commonJS({
                 logger
               });
               if (shouldSendRequest) {
-                [response, error4] = await trySendRequest(request, next);
+                [response, error5] = await trySendRequest(request, next);
               }
               if (isChallengeResponse(response)) {
                 claims = getCaeChallengeClaims(response.headers.get("WWW-Authenticate"));
@@ -33683,14 +33683,14 @@ var require_bearerTokenAuthenticationPolicy = __commonJS({
                     logger
                   }, parsedClaim);
                   if (shouldSendRequest) {
-                    [response, error4] = await trySendRequest(request, next);
+                    [response, error5] = await trySendRequest(request, next);
                   }
                 }
               }
             }
           }
-          if (error4) {
-            throw error4;
+          if (error5) {
+            throw error5;
           } else {
             return response;
           }
@@ -35181,12 +35181,12 @@ var require_operationHelpers = __commonJS({
       if (hasOriginalRequest(request)) {
         return getOperationRequestInfo(request[originalRequestSymbol]);
       }
-      let info7 = state_js_1.state.operationRequestMap.get(request);
-      if (!info7) {
-        info7 = {};
-        state_js_1.state.operationRequestMap.set(request, info7);
+      let info8 = state_js_1.state.operationRequestMap.get(request);
+      if (!info8) {
+        info8 = {};
+        state_js_1.state.operationRequestMap.set(request, info8);
       }
-      return info7;
+      return info8;
     }
   }
 });
@@ -35264,9 +35264,9 @@ var require_deserializationPolicy = __commonJS({
         return parsedResponse;
       }
       const responseSpec = getOperationResponseMap(parsedResponse);
-      const { error: error4, shouldReturnResponse } = handleErrorResponse(parsedResponse, operationSpec, responseSpec, options);
-      if (error4) {
-        throw error4;
+      const { error: error5, shouldReturnResponse } = handleErrorResponse(parsedResponse, operationSpec, responseSpec, options);
+      if (error5) {
+        throw error5;
       } else if (shouldReturnResponse) {
         return parsedResponse;
       }
@@ -35313,13 +35313,13 @@ var require_deserializationPolicy = __commonJS({
       }
       const errorResponseSpec = responseSpec ?? operationSpec.responses.default;
       const initialErrorMessage = parsedResponse.request.streamResponseStatusCodes?.has(parsedResponse.status) ? `Unexpected status code: ${parsedResponse.status}` : parsedResponse.bodyAsText;
-      const error4 = new core_rest_pipeline_1.RestError(initialErrorMessage, {
+      const error5 = new core_rest_pipeline_1.RestError(initialErrorMessage, {
         statusCode: parsedResponse.status,
         request: parsedResponse.request,
         response: parsedResponse
       });
       if (!errorResponseSpec && !(parsedResponse.parsedBody?.error?.code && parsedResponse.parsedBody?.error?.message)) {
-        throw error4;
+        throw error5;
       }
       const defaultBodyMapper = errorResponseSpec?.bodyMapper;
       const defaultHeadersMapper = errorResponseSpec?.headersMapper;
@@ -35339,21 +35339,21 @@ var require_deserializationPolicy = __commonJS({
             deserializedError = operationSpec.serializer.deserialize(defaultBodyMapper, valueToDeserialize, "error.response.parsedBody", options);
           }
           const internalError = parsedBody.error || deserializedError || parsedBody;
-          error4.code = internalError.code;
+          error5.code = internalError.code;
           if (internalError.message) {
-            error4.message = internalError.message;
+            error5.message = internalError.message;
           }
           if (defaultBodyMapper) {
-            error4.response.parsedBody = deserializedError;
+            error5.response.parsedBody = deserializedError;
           }
         }
         if (parsedResponse.headers && defaultHeadersMapper) {
-          error4.response.parsedHeaders = operationSpec.serializer.deserialize(defaultHeadersMapper, parsedResponse.headers.toJSON(), "operationRes.parsedHeaders");
+          error5.response.parsedHeaders = operationSpec.serializer.deserialize(defaultHeadersMapper, parsedResponse.headers.toJSON(), "operationRes.parsedHeaders");
         }
       } catch (defaultError) {
-        error4.message = `Error "${defaultError.message}" occurred in deserializing the responseBody - "${parsedResponse.bodyAsText}" for the default response.`;
+        error5.message = `Error "${defaultError.message}" occurred in deserializing the responseBody - "${parsedResponse.bodyAsText}" for the default response.`;
       }
-      return { error: error4, shouldReturnResponse: false };
+      return { error: error5, shouldReturnResponse: false };
     }
     async function parse(jsonContentTypes, xmlContentTypes, operationResponse, opts, parseXML) {
       if (!operationResponse.request.streamResponseStatusCodes?.has(operationResponse.status) && operationResponse.bodyAsText) {
@@ -35515,8 +35515,8 @@ var require_serializationPolicy = __commonJS({
               request.body = JSON.stringify(request.body);
             }
           }
-        } catch (error4) {
-          throw new Error(`Error "${error4.message}" occurred in serializing the payload - ${JSON.stringify(serializedName, void 0, "  ")}.`);
+        } catch (error5) {
+          throw new Error(`Error "${error5.message}" occurred in serializing the payload - ${JSON.stringify(serializedName, void 0, "  ")}.`);
         }
       } else if (operationSpec.formDataParameters && operationSpec.formDataParameters.length > 0) {
         request.formData = {};
@@ -35936,16 +35936,16 @@ var require_serviceClient = __commonJS({
             options.onResponse(rawResponse, flatResponse);
           }
           return flatResponse;
-        } catch (error4) {
-          if (typeof error4 === "object" && error4?.response) {
-            const rawResponse = error4.response;
-            const flatResponse = (0, utils_js_1.flattenResponse)(rawResponse, operationSpec.responses[error4.statusCode] || operationSpec.responses["default"]);
-            error4.details = flatResponse;
+        } catch (error5) {
+          if (typeof error5 === "object" && error5?.response) {
+            const rawResponse = error5.response;
+            const flatResponse = (0, utils_js_1.flattenResponse)(rawResponse, operationSpec.responses[error5.statusCode] || operationSpec.responses["default"]);
+            error5.details = flatResponse;
             if (options?.onResponse) {
-              options.onResponse(rawResponse, flatResponse, error4);
+              options.onResponse(rawResponse, flatResponse, error5);
             }
           }
-          throw error4;
+          throw error5;
         }
       }
     };
@@ -36502,10 +36502,10 @@ var require_extendedClient = __commonJS({
       async sendOperationRequest(operationArguments, operationSpec) {
         const userProvidedCallBack = operationArguments?.options?.onResponse;
         let lastResponse;
-        function onResponse(rawResponse, flatResponse, error4) {
+        function onResponse(rawResponse, flatResponse, error5) {
           lastResponse = rawResponse;
           if (userProvidedCallBack) {
-            userProvidedCallBack(rawResponse, flatResponse, error4);
+            userProvidedCallBack(rawResponse, flatResponse, error5);
           }
         }
         operationArguments.options = {
@@ -38437,7 +38437,7 @@ var require_utils_common = __commonJS({
           accountName = "";
         }
         return accountName;
-      } catch (error4) {
+      } catch (error5) {
         throw new Error("Unable to extract accountName with provided information.");
       }
     }
@@ -39629,25 +39629,25 @@ var require_StorageRetryPolicyV2 = __commonJS({
       const maxRetryDelayInMs = options.maxRetryDelayInMs ?? DEFAULT_RETRY_OPTIONS.maxRetryDelayInMs;
       const secondaryHost = options.secondaryHost ?? DEFAULT_RETRY_OPTIONS.secondaryHost;
       const tryTimeoutInMs = options.tryTimeoutInMs ?? DEFAULT_RETRY_OPTIONS.tryTimeoutInMs;
-      function shouldRetry({ isPrimaryRetry, attempt, response, error: error4 }) {
+      function shouldRetry({ isPrimaryRetry, attempt, response, error: error5 }) {
         if (attempt >= maxTries) {
           log_js_1.logger.info(`RetryPolicy: Attempt(s) ${attempt} >= maxTries ${maxTries}, no further try.`);
           return false;
         }
-        if (error4) {
+        if (error5) {
           for (const retriableError of retriableErrors) {
-            if (error4.name.toUpperCase().includes(retriableError) || error4.message.toUpperCase().includes(retriableError) || error4.code && error4.code.toString().toUpperCase() === retriableError) {
+            if (error5.name.toUpperCase().includes(retriableError) || error5.message.toUpperCase().includes(retriableError) || error5.code && error5.code.toString().toUpperCase() === retriableError) {
               log_js_1.logger.info(`RetryPolicy: Network error ${retriableError} found, will retry.`);
               return true;
             }
           }
-          if (error4?.code === "PARSE_ERROR" && error4?.message.startsWith(`Error "Error: Unclosed root tag`)) {
+          if (error5?.code === "PARSE_ERROR" && error5?.message.startsWith(`Error "Error: Unclosed root tag`)) {
             log_js_1.logger.info("RetryPolicy: Incomplete XML response likely due to service timeout, will retry.");
             return true;
           }
         }
-        if (response || error4) {
-          const statusCode = response?.status ?? error4?.statusCode ?? 0;
+        if (response || error5) {
+          const statusCode = response?.status ?? error5?.statusCode ?? 0;
           if (!isPrimaryRetry && statusCode === 404) {
             log_js_1.logger.info(`RetryPolicy: Secondary access with 404, will retry.`);
             return true;
@@ -39701,12 +39701,12 @@ var require_StorageRetryPolicyV2 = __commonJS({
           let attempt = 1;
           let retryAgain = true;
           let response;
-          let error4;
+          let error5;
           while (retryAgain) {
             const isPrimaryRetry = secondaryHas404 || !secondaryUrl || !["GET", "HEAD", "OPTIONS"].includes(request.method) || attempt % 2 === 1;
             request.url = isPrimaryRetry ? primaryUrl : secondaryUrl;
             response = void 0;
-            error4 = void 0;
+            error5 = void 0;
             try {
               log_js_1.logger.info(`RetryPolicy: =====> Try=${attempt} ${isPrimaryRetry ? "Primary" : "Secondary"}`);
               response = await next(request);
@@ -39714,13 +39714,13 @@ var require_StorageRetryPolicyV2 = __commonJS({
             } catch (e) {
               if ((0, core_rest_pipeline_1.isRestError)(e)) {
                 log_js_1.logger.error(`RetryPolicy: Caught error, message: ${e.message}, code: ${e.code}`);
-                error4 = e;
+                error5 = e;
               } else {
                 log_js_1.logger.error(`RetryPolicy: Caught error, message: ${(0, core_util_1.getErrorMessage)(e)}`);
                 throw e;
               }
             }
-            retryAgain = shouldRetry({ isPrimaryRetry, attempt, response, error: error4 });
+            retryAgain = shouldRetry({ isPrimaryRetry, attempt, response, error: error5 });
             if (retryAgain) {
               await (0, utils_common_js_1.delay)(calculateDelay(isPrimaryRetry, attempt), request.abortSignal, RETRY_ABORT_ERROR);
             }
@@ -39729,7 +39729,7 @@ var require_StorageRetryPolicyV2 = __commonJS({
           if (response) {
             return response;
           }
-          throw error4 ?? new core_rest_pipeline_1.RestError("RetryPolicy failed without known error.");
+          throw error5 ?? new core_rest_pipeline_1.RestError("RetryPolicy failed without known error.");
         }
       };
     }
@@ -54218,7 +54218,7 @@ var require_utils_common2 = __commonJS({
           accountName = "";
         }
         return accountName;
-      } catch (error4) {
+      } catch (error5) {
         throw new Error("Unable to extract accountName with provided information.");
       }
     }
@@ -56073,8 +56073,8 @@ var require_RetriableReadableStream = __commonJS({
               this.source = newSource;
               this.setSourceEventHandlers();
               return;
-            }).catch((error4) => {
-              this.destroy(error4);
+            }).catch((error5) => {
+              this.destroy(error5);
             });
           } else {
             this.destroy(new Error(`Data corruption failure: received less data than required and reached maxRetires limitation. Received data offset: ${this.offset - 1}, data needed offset: ${this.end}, retries: ${this.retries}, max retries: ${this.maxRetryRequests}`));
@@ -56083,10 +56083,10 @@ var require_RetriableReadableStream = __commonJS({
           this.destroy(new Error(`Data corruption failure: Received more data than original request, data needed offset is ${this.end}, received offset: ${this.offset - 1}`));
         }
       };
-      _destroy(error4, callback) {
+      _destroy(error5, callback) {
         this.removeSourceEventHandlers();
         this.source.destroy();
-        callback(error4 === null ? void 0 : error4);
+        callback(error5 === null ? void 0 : error5);
       }
     };
     exports2.RetriableReadableStream = RetriableReadableStream;
@@ -57756,12 +57756,12 @@ var require_operation = __commonJS({
     exports2.deserializeState = deserializeState;
     function setStateError(inputs) {
       const { state, stateProxy, isOperationError } = inputs;
-      return (error4) => {
-        if (isOperationError(error4)) {
-          stateProxy.setError(state, error4);
+      return (error5) => {
+        if (isOperationError(error5)) {
+          stateProxy.setError(state, error5);
           stateProxy.setFailed(state);
         }
-        throw error4;
+        throw error5;
       };
     }
     function appendReadableErrorMessage(currentMessage, innerMessage) {
@@ -58048,16 +58048,16 @@ var require_operation2 = __commonJS({
     }
     exports2.parseRetryAfter = parseRetryAfter;
     function getErrorFromResponse(response) {
-      const error4 = accessBodyProperty(response, "error");
-      if (!error4) {
+      const error5 = accessBodyProperty(response, "error");
+      if (!error5) {
         logger_js_1.logger.warning(`The long-running operation failed but there is no error property in the response's body`);
         return;
       }
-      if (!error4.code || !error4.message) {
+      if (!error5.code || !error5.message) {
         logger_js_1.logger.warning(`The long-running operation failed but the error property in the response's body doesn't contain code or message`);
         return;
       }
-      return error4;
+      return error5;
     }
     exports2.getErrorFromResponse = getErrorFromResponse;
     function calculatePollingIntervalFromDate(retryAfterDate) {
@@ -58204,7 +58204,7 @@ var require_poller = __commonJS({
        */
       initState: (config) => ({ status: "running", config }),
       setCanceled: (state) => state.status = "canceled",
-      setError: (state, error4) => state.error = error4,
+      setError: (state, error5) => state.error = error5,
       setResult: (state, result) => state.result = result,
       setRunning: (state) => state.status = "running",
       setSucceeded: (state) => state.status = "succeeded",
@@ -58406,7 +58406,7 @@ var require_operation3 = __commonJS({
     var createStateProxy = () => ({
       initState: (config) => ({ config, isStarted: true }),
       setCanceled: (state) => state.isCancelled = true,
-      setError: (state, error4) => state.error = error4,
+      setError: (state, error5) => state.error = error5,
       setResult: (state, result) => state.result = result,
       setRunning: (state) => state.isStarted = true,
       setSucceeded: (state) => state.isCompleted = true,
@@ -58659,9 +58659,9 @@ var require_poller3 = __commonJS({
         if (this.operation.state.isCancelled) {
           this.stopped = true;
           if (!this.resolveOnUnsuccessful) {
-            const error4 = new PollerCancelledError("Operation was canceled");
-            this.reject(error4);
-            throw error4;
+            const error5 = new PollerCancelledError("Operation was canceled");
+            this.reject(error5);
+            throw error5;
           }
         }
         if (this.isDone() && this.resolve) {
@@ -59060,8 +59060,8 @@ var require_Batch = __commonJS({
             this.actives--;
             this.completed++;
             this.parallelExecute();
-          } catch (error4) {
-            this.emitter.emit("error", error4);
+          } catch (error5) {
+            this.emitter.emit("error", error5);
           }
         });
       }
@@ -59076,9 +59076,9 @@ var require_Batch = __commonJS({
         this.parallelExecute();
         return new Promise((resolve2, reject) => {
           this.emitter.on("finish", resolve2);
-          this.emitter.on("error", (error4) => {
+          this.emitter.on("error", (error5) => {
             this.state = BatchStates.Error;
-            reject(error4);
+            reject(error5);
           });
         });
       }
@@ -60007,8 +60007,8 @@ var require_Clients = __commonJS({
           if (!buffer) {
             try {
               buffer = Buffer.alloc(count);
-            } catch (error4) {
-              throw new Error(`Unable to allocate the buffer of size: ${count}(in bytes). Please try passing your own buffer to the "downloadToBuffer" method or try using other methods like "download" or "downloadToFile".	 ${error4.message}`);
+            } catch (error5) {
+              throw new Error(`Unable to allocate the buffer of size: ${count}(in bytes). Please try passing your own buffer to the "downloadToBuffer" method or try using other methods like "download" or "downloadToFile".	 ${error5.message}`);
             }
           }
           if (buffer.length < count) {
@@ -60095,7 +60095,7 @@ var require_Clients = __commonJS({
             throw new Error("Provided containerName is invalid.");
           }
           return { blobName, containerName };
-        } catch (error4) {
+        } catch (error5) {
           throw new Error("Unable to extract blobName and containerName with provided information.");
         }
       }
@@ -63674,7 +63674,7 @@ var require_ContainerClient = __commonJS({
             throw new Error("Provided containerName is invalid.");
           }
           return containerName;
-        } catch (error4) {
+        } catch (error5) {
           throw new Error("Unable to extract containerName with provided information.");
         }
       }
@@ -65167,7 +65167,7 @@ var require_uploadUtils = __commonJS({
     };
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.uploadCacheArchiveSDK = exports2.UploadProgress = void 0;
-    var core8 = __importStar2(require_core());
+    var core9 = __importStar2(require_core());
     var storage_blob_1 = require_commonjs15();
     var errors_1 = require_errors2();
     var UploadProgress = class {
@@ -65209,7 +65209,7 @@ var require_uploadUtils = __commonJS({
         const percentage = (100 * (transferredBytes / this.contentLength)).toFixed(1);
         const elapsedTime = Date.now() - this.startTime;
         const uploadSpeed = (transferredBytes / (1024 * 1024) / (elapsedTime / 1e3)).toFixed(1);
-        core8.info(`Sent ${transferredBytes} of ${this.contentLength} (${percentage}%), ${uploadSpeed} MBs/sec`);
+        core9.info(`Sent ${transferredBytes} of ${this.contentLength} (${percentage}%), ${uploadSpeed} MBs/sec`);
         if (this.isDone()) {
           this.displayedComplete = true;
         }
@@ -65264,15 +65264,15 @@ var require_uploadUtils = __commonJS({
         };
         try {
           uploadProgress.startDisplayTimer();
-          core8.debug(`BlobClient: ${blobClient.name}:${blobClient.accountName}:${blobClient.containerName}`);
+          core9.debug(`BlobClient: ${blobClient.name}:${blobClient.accountName}:${blobClient.containerName}`);
           const response = yield blockBlobClient.uploadFile(archivePath, uploadOptions);
           if (response._response.status >= 400) {
             throw new errors_1.InvalidResponseError(`uploadCacheArchiveSDK: upload failed with status code ${response._response.status}`);
           }
           return response;
-        } catch (error4) {
-          core8.warning(`uploadCacheArchiveSDK: internal error uploading cache archive: ${error4.message}`);
-          throw error4;
+        } catch (error5) {
+          core9.warning(`uploadCacheArchiveSDK: internal error uploading cache archive: ${error5.message}`);
+          throw error5;
         } finally {
           uploadProgress.stopDisplayTimer();
         }
@@ -65342,7 +65342,7 @@ var require_requestUtils = __commonJS({
     };
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.retryHttpClientResponse = exports2.retryTypedResponse = exports2.retry = exports2.isRetryableStatusCode = exports2.isServerErrorStatusCode = exports2.isSuccessStatusCode = void 0;
-    var core8 = __importStar2(require_core());
+    var core9 = __importStar2(require_core());
     var http_client_1 = require_lib();
     var constants_1 = require_constants6();
     function isSuccessStatusCode(statusCode) {
@@ -65386,12 +65386,12 @@ var require_requestUtils = __commonJS({
           let isRetryable = false;
           try {
             response = yield method();
-          } catch (error4) {
+          } catch (error5) {
             if (onError) {
-              response = onError(error4);
+              response = onError(error5);
             }
             isRetryable = true;
-            errorMessage = error4.message;
+            errorMessage = error5.message;
           }
           if (response) {
             statusCode = getStatusCode(response);
@@ -65403,9 +65403,9 @@ var require_requestUtils = __commonJS({
             isRetryable = isRetryableStatusCode(statusCode);
             errorMessage = `Cache service responded with ${statusCode}`;
           }
-          core8.debug(`${name} - Attempt ${attempt} of ${maxAttempts} failed with error: ${errorMessage}`);
+          core9.debug(`${name} - Attempt ${attempt} of ${maxAttempts} failed with error: ${errorMessage}`);
           if (!isRetryable) {
-            core8.debug(`${name} - Error is not retryable`);
+            core9.debug(`${name} - Error is not retryable`);
             break;
           }
           yield sleep(delay);
@@ -65425,13 +65425,13 @@ var require_requestUtils = __commonJS({
           delay,
           // If the error object contains the statusCode property, extract it and return
           // an TypedResponse<T> so it can be processed by the retry logic.
-          (error4) => {
-            if (error4 instanceof http_client_1.HttpClientError) {
+          (error5) => {
+            if (error5 instanceof http_client_1.HttpClientError) {
               return {
-                statusCode: error4.statusCode,
+                statusCode: error5.statusCode,
                 result: null,
                 headers: {},
-                error: error4
+                error: error5
               };
             } else {
               return void 0;
@@ -65654,7 +65654,7 @@ var require_downloadUtils = __commonJS({
     };
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.downloadCacheStorageSDK = exports2.downloadCacheHttpClientConcurrent = exports2.downloadCacheHttpClient = exports2.DownloadProgress = void 0;
-    var core8 = __importStar2(require_core());
+    var core9 = __importStar2(require_core());
     var http_client_1 = require_lib();
     var storage_blob_1 = require_commonjs15();
     var buffer = __importStar2(require("buffer"));
@@ -65692,7 +65692,7 @@ var require_downloadUtils = __commonJS({
         this.segmentIndex = this.segmentIndex + 1;
         this.segmentSize = segmentSize;
         this.receivedBytes = 0;
-        core8.debug(`Downloading segment at offset ${this.segmentOffset} with length ${this.segmentSize}...`);
+        core9.debug(`Downloading segment at offset ${this.segmentOffset} with length ${this.segmentSize}...`);
       }
       /**
        * Sets the number of bytes received for the current segment.
@@ -65726,7 +65726,7 @@ var require_downloadUtils = __commonJS({
         const percentage = (100 * (transferredBytes / this.contentLength)).toFixed(1);
         const elapsedTime = Date.now() - this.startTime;
         const downloadSpeed = (transferredBytes / (1024 * 1024) / (elapsedTime / 1e3)).toFixed(1);
-        core8.info(`Received ${transferredBytes} of ${this.contentLength} (${percentage}%), ${downloadSpeed} MBs/sec`);
+        core9.info(`Received ${transferredBytes} of ${this.contentLength} (${percentage}%), ${downloadSpeed} MBs/sec`);
         if (this.isDone()) {
           this.displayedComplete = true;
         }
@@ -65776,7 +65776,7 @@ var require_downloadUtils = __commonJS({
         }));
         downloadResponse.message.socket.setTimeout(constants_1.SocketTimeout, () => {
           downloadResponse.message.destroy();
-          core8.debug(`Aborting download, socket timed out after ${constants_1.SocketTimeout} ms`);
+          core9.debug(`Aborting download, socket timed out after ${constants_1.SocketTimeout} ms`);
         });
         yield pipeResponseToStream(downloadResponse, writeStream);
         const contentLengthHeader = downloadResponse.message.headers["content-length"];
@@ -65787,7 +65787,7 @@ var require_downloadUtils = __commonJS({
             throw new Error(`Incomplete download. Expected file size: ${expectedLength}, actual file size: ${actualLength}`);
           }
         } else {
-          core8.debug("Unable to validate download, no Content-Length header");
+          core9.debug("Unable to validate download, no Content-Length header");
         }
       });
     }
@@ -65907,7 +65907,7 @@ var require_downloadUtils = __commonJS({
         const properties = yield client.getProperties();
         const contentLength = (_a = properties.contentLength) !== null && _a !== void 0 ? _a : -1;
         if (contentLength < 0) {
-          core8.debug("Unable to determine content length, downloading file with http-client...");
+          core9.debug("Unable to determine content length, downloading file with http-client...");
           yield downloadCacheHttpClient(archiveLocation, archivePath);
         } else {
           const maxSegmentSize = Math.min(134217728, buffer.constants.MAX_LENGTH);
@@ -65987,7 +65987,7 @@ var require_options = __commonJS({
     };
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.getDownloadOptions = exports2.getUploadOptions = void 0;
-    var core8 = __importStar2(require_core());
+    var core9 = __importStar2(require_core());
     function getUploadOptions(copy) {
       const result = {
         useAzureSdk: false,
@@ -66007,9 +66007,9 @@ var require_options = __commonJS({
       }
       result.uploadConcurrency = !isNaN(Number(process.env["CACHE_UPLOAD_CONCURRENCY"])) ? Math.min(32, Number(process.env["CACHE_UPLOAD_CONCURRENCY"])) : result.uploadConcurrency;
       result.uploadChunkSize = !isNaN(Number(process.env["CACHE_UPLOAD_CHUNK_SIZE"])) ? Math.min(128 * 1024 * 1024, Number(process.env["CACHE_UPLOAD_CHUNK_SIZE"]) * 1024 * 1024) : result.uploadChunkSize;
-      core8.debug(`Use Azure SDK: ${result.useAzureSdk}`);
-      core8.debug(`Upload concurrency: ${result.uploadConcurrency}`);
-      core8.debug(`Upload chunk size: ${result.uploadChunkSize}`);
+      core9.debug(`Use Azure SDK: ${result.useAzureSdk}`);
+      core9.debug(`Upload concurrency: ${result.uploadConcurrency}`);
+      core9.debug(`Upload chunk size: ${result.uploadChunkSize}`);
       return result;
     }
     exports2.getUploadOptions = getUploadOptions;
@@ -66046,12 +66046,12 @@ var require_options = __commonJS({
       if (segmentDownloadTimeoutMins && !isNaN(Number(segmentDownloadTimeoutMins)) && isFinite(Number(segmentDownloadTimeoutMins))) {
         result.segmentTimeoutInMs = Number(segmentDownloadTimeoutMins) * 60 * 1e3;
       }
-      core8.debug(`Use Azure SDK: ${result.useAzureSdk}`);
-      core8.debug(`Download concurrency: ${result.downloadConcurrency}`);
-      core8.debug(`Request timeout (ms): ${result.timeoutInMs}`);
-      core8.debug(`Cache segment download timeout mins env var: ${process.env["SEGMENT_DOWNLOAD_TIMEOUT_MINS"]}`);
-      core8.debug(`Segment download timeout (ms): ${result.segmentTimeoutInMs}`);
-      core8.debug(`Lookup only: ${result.lookupOnly}`);
+      core9.debug(`Use Azure SDK: ${result.useAzureSdk}`);
+      core9.debug(`Download concurrency: ${result.downloadConcurrency}`);
+      core9.debug(`Request timeout (ms): ${result.timeoutInMs}`);
+      core9.debug(`Cache segment download timeout mins env var: ${process.env["SEGMENT_DOWNLOAD_TIMEOUT_MINS"]}`);
+      core9.debug(`Segment download timeout (ms): ${result.segmentTimeoutInMs}`);
+      core9.debug(`Lookup only: ${result.lookupOnly}`);
       return result;
     }
     exports2.getDownloadOptions = getDownloadOptions;
@@ -66231,7 +66231,7 @@ var require_cacheHttpClient = __commonJS({
     };
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.saveCache = exports2.reserveCache = exports2.downloadCache = exports2.getCacheEntry = void 0;
-    var core8 = __importStar2(require_core());
+    var core9 = __importStar2(require_core());
     var http_client_1 = require_lib();
     var auth_1 = require_auth();
     var fs5 = __importStar2(require("fs"));
@@ -66249,7 +66249,7 @@ var require_cacheHttpClient = __commonJS({
         throw new Error("Cache Service Url not found, unable to restore cache.");
       }
       const url = `${baseUrl}_apis/artifactcache/${resource}`;
-      core8.debug(`Resource Url: ${url}`);
+      core9.debug(`Resource Url: ${url}`);
       return url;
     }
     function createAcceptHeader(type2, apiVersion) {
@@ -66277,7 +66277,7 @@ var require_cacheHttpClient = __commonJS({
           return httpClient.getJson(getCacheApiUrl(resource));
         }));
         if (response.statusCode === 204) {
-          if (core8.isDebug()) {
+          if (core9.isDebug()) {
             yield printCachesListForDiagnostics(keys[0], httpClient, version);
           }
           return null;
@@ -66290,9 +66290,9 @@ var require_cacheHttpClient = __commonJS({
         if (!cacheDownloadUrl) {
           throw new Error("Cache not found.");
         }
-        core8.setSecret(cacheDownloadUrl);
-        core8.debug(`Cache Result:`);
-        core8.debug(JSON.stringify(cacheResult));
+        core9.setSecret(cacheDownloadUrl);
+        core9.debug(`Cache Result:`);
+        core9.debug(JSON.stringify(cacheResult));
         return cacheResult;
       });
     }
@@ -66307,10 +66307,10 @@ var require_cacheHttpClient = __commonJS({
           const cacheListResult = response.result;
           const totalCount = cacheListResult === null || cacheListResult === void 0 ? void 0 : cacheListResult.totalCount;
           if (totalCount && totalCount > 0) {
-            core8.debug(`No matching cache found for cache key '${key}', version '${version} and scope ${process.env["GITHUB_REF"]}. There exist one or more cache(s) with similar key but they have different version or scope. See more info on cache matching here: https://docs.github.com/en/actions/using-workflows/caching-dependencies-to-speed-up-workflows#matching-a-cache-key 
+            core9.debug(`No matching cache found for cache key '${key}', version '${version} and scope ${process.env["GITHUB_REF"]}. There exist one or more cache(s) with similar key but they have different version or scope. See more info on cache matching here: https://docs.github.com/en/actions/using-workflows/caching-dependencies-to-speed-up-workflows#matching-a-cache-key 
 Other caches with similar key:`);
             for (const cacheEntry of (cacheListResult === null || cacheListResult === void 0 ? void 0 : cacheListResult.artifactCaches) || []) {
-              core8.debug(`Cache Key: ${cacheEntry === null || cacheEntry === void 0 ? void 0 : cacheEntry.cacheKey}, Cache Version: ${cacheEntry === null || cacheEntry === void 0 ? void 0 : cacheEntry.cacheVersion}, Cache Scope: ${cacheEntry === null || cacheEntry === void 0 ? void 0 : cacheEntry.scope}, Cache Created: ${cacheEntry === null || cacheEntry === void 0 ? void 0 : cacheEntry.creationTime}`);
+              core9.debug(`Cache Key: ${cacheEntry === null || cacheEntry === void 0 ? void 0 : cacheEntry.cacheKey}, Cache Version: ${cacheEntry === null || cacheEntry === void 0 ? void 0 : cacheEntry.cacheVersion}, Cache Scope: ${cacheEntry === null || cacheEntry === void 0 ? void 0 : cacheEntry.scope}, Cache Created: ${cacheEntry === null || cacheEntry === void 0 ? void 0 : cacheEntry.creationTime}`);
             }
           }
         }
@@ -66355,7 +66355,7 @@ Other caches with similar key:`);
     }
     function uploadChunk(httpClient, resourceUrl, openStream, start, end) {
       return __awaiter2(this, void 0, void 0, function* () {
-        core8.debug(`Uploading chunk of size ${end - start + 1} bytes at offset ${start} with content range: ${getContentRange(start, end)}`);
+        core9.debug(`Uploading chunk of size ${end - start + 1} bytes at offset ${start} with content range: ${getContentRange(start, end)}`);
         const additionalHeaders = {
           "Content-Type": "application/octet-stream",
           "Content-Range": getContentRange(start, end)
@@ -66377,7 +66377,7 @@ Other caches with similar key:`);
         const concurrency = utils.assertDefined("uploadConcurrency", uploadOptions.uploadConcurrency);
         const maxChunkSize = utils.assertDefined("uploadChunkSize", uploadOptions.uploadChunkSize);
         const parallelUploads = [...new Array(concurrency).keys()];
-        core8.debug("Awaiting all uploads");
+        core9.debug("Awaiting all uploads");
         let offset = 0;
         try {
           yield Promise.all(parallelUploads.map(() => __awaiter2(this, void 0, void 0, function* () {
@@ -66391,8 +66391,8 @@ Other caches with similar key:`);
                 start,
                 end,
                 autoClose: false
-              }).on("error", (error4) => {
-                throw new Error(`Cache upload failed because file read failed with ${error4.message}`);
+              }).on("error", (error5) => {
+                throw new Error(`Cache upload failed because file read failed with ${error5.message}`);
               }), start, end);
             }
           })));
@@ -66420,16 +66420,16 @@ Other caches with similar key:`);
           yield (0, uploadUtils_1.uploadCacheArchiveSDK)(signedUploadURL, archivePath, options);
         } else {
           const httpClient = createHttpClient();
-          core8.debug("Upload cache");
+          core9.debug("Upload cache");
           yield uploadFile(httpClient, cacheId, archivePath, options);
-          core8.debug("Commiting cache");
+          core9.debug("Commiting cache");
           const cacheSize = utils.getArchiveFileSizeInBytes(archivePath);
-          core8.info(`Cache Size: ~${Math.round(cacheSize / (1024 * 1024))} MB (${cacheSize} B)`);
+          core9.info(`Cache Size: ~${Math.round(cacheSize / (1024 * 1024))} MB (${cacheSize} B)`);
           const commitCacheResponse = yield commitCache(httpClient, cacheId, cacheSize);
           if (!(0, requestUtils_1.isSuccessStatusCode)(commitCacheResponse.statusCode)) {
             throw new Error(`Cache service responded with ${commitCacheResponse.statusCode} during commit cache.`);
           }
-          core8.info("Cache saved successfully");
+          core9.info("Cache saved successfully");
         }
       });
     }
@@ -67714,9 +67714,9 @@ var require_reflection_type_check = __commonJS({
     var reflection_info_1 = require_reflection_info();
     var oneof_1 = require_oneof();
     var ReflectionTypeCheck = class {
-      constructor(info7) {
+      constructor(info8) {
         var _a;
-        this.fields = (_a = info7.fields) !== null && _a !== void 0 ? _a : [];
+        this.fields = (_a = info8.fields) !== null && _a !== void 0 ? _a : [];
       }
       prepare() {
         if (this.data)
@@ -67962,8 +67962,8 @@ var require_reflection_json_reader = __commonJS({
     var assert_1 = require_assert();
     var reflection_long_convert_1 = require_reflection_long_convert();
     var ReflectionJsonReader = class {
-      constructor(info7) {
-        this.info = info7;
+      constructor(info8) {
+        this.info = info8;
       }
       prepare() {
         var _a;
@@ -68238,8 +68238,8 @@ var require_reflection_json_reader = __commonJS({
                 break;
               return base64_1.base64decode(json2);
           }
-        } catch (error4) {
-          e = error4.message;
+        } catch (error5) {
+          e = error5.message;
         }
         this.assert(false, fieldName + (e ? " - " + e : ""), json2);
       }
@@ -68259,9 +68259,9 @@ var require_reflection_json_writer = __commonJS({
     var reflection_info_1 = require_reflection_info();
     var assert_1 = require_assert();
     var ReflectionJsonWriter = class {
-      constructor(info7) {
+      constructor(info8) {
         var _a;
-        this.fields = (_a = info7.fields) !== null && _a !== void 0 ? _a : [];
+        this.fields = (_a = info8.fields) !== null && _a !== void 0 ? _a : [];
       }
       /**
        * Converts the message to a JSON object, based on the field descriptors.
@@ -68514,8 +68514,8 @@ var require_reflection_binary_reader = __commonJS({
     var reflection_long_convert_1 = require_reflection_long_convert();
     var reflection_scalar_default_1 = require_reflection_scalar_default();
     var ReflectionBinaryReader = class {
-      constructor(info7) {
-        this.info = info7;
+      constructor(info8) {
+        this.info = info8;
       }
       prepare() {
         var _a;
@@ -68688,8 +68688,8 @@ var require_reflection_binary_writer = __commonJS({
     var assert_1 = require_assert();
     var pb_long_1 = require_pb_long();
     var ReflectionBinaryWriter = class {
-      constructor(info7) {
-        this.info = info7;
+      constructor(info8) {
+        this.info = info8;
       }
       prepare() {
         if (!this.fields) {
@@ -68939,9 +68939,9 @@ var require_reflection_merge_partial = __commonJS({
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.reflectionMergePartial = void 0;
-    function reflectionMergePartial(info7, target, source) {
+    function reflectionMergePartial(info8, target, source) {
       let fieldValue, input = source, output;
-      for (let field of info7.fields) {
+      for (let field of info8.fields) {
         let name = field.localName;
         if (field.oneof) {
           const group = input[field.oneof];
@@ -69010,12 +69010,12 @@ var require_reflection_equals = __commonJS({
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.reflectionEquals = void 0;
     var reflection_info_1 = require_reflection_info();
-    function reflectionEquals(info7, a, b) {
+    function reflectionEquals(info8, a, b) {
       if (a === b)
         return true;
       if (!a || !b)
         return false;
-      for (let field of info7.fields) {
+      for (let field of info8.fields) {
         let localName = field.localName;
         let val_a = field.oneof ? a[field.oneof][localName] : a[localName];
         let val_b = field.oneof ? b[field.oneof][localName] : b[localName];
@@ -69810,12 +69810,12 @@ var require_rpc_output_stream = __commonJS({
        * at a time.
        * Can be used to wrap a stream by using the other stream's `onNext`.
        */
-      notifyNext(message, error4, complete) {
-        runtime_1.assert((message ? 1 : 0) + (error4 ? 1 : 0) + (complete ? 1 : 0) <= 1, "only one emission at a time");
+      notifyNext(message, error5, complete) {
+        runtime_1.assert((message ? 1 : 0) + (error5 ? 1 : 0) + (complete ? 1 : 0) <= 1, "only one emission at a time");
         if (message)
           this.notifyMessage(message);
-        if (error4)
-          this.notifyError(error4);
+        if (error5)
+          this.notifyError(error5);
         if (complete)
           this.notifyComplete();
       }
@@ -69835,12 +69835,12 @@ var require_rpc_output_stream = __commonJS({
        *
        * Triggers onNext and onError callbacks.
        */
-      notifyError(error4) {
+      notifyError(error5) {
         runtime_1.assert(!this.closed, "stream is closed");
-        this._closed = error4;
-        this.pushIt(error4);
-        this._lis.err.forEach((l) => l(error4));
-        this._lis.nxt.forEach((l) => l(void 0, error4, false));
+        this._closed = error5;
+        this.pushIt(error5);
+        this._lis.err.forEach((l) => l(error5));
+        this._lis.nxt.forEach((l) => l(void 0, error5, false));
         this.clearLis();
       }
       /**
@@ -70304,8 +70304,8 @@ var require_test_transport = __commonJS({
           }
           try {
             yield delay(this.responseDelay, abort)(void 0);
-          } catch (error4) {
-            stream.notifyError(error4);
+          } catch (error5) {
+            stream.notifyError(error5);
             return;
           }
           if (this.data.response instanceof rpc_error_1.RpcError) {
@@ -70316,8 +70316,8 @@ var require_test_transport = __commonJS({
             stream.notifyMessage(msg);
             try {
               yield delay(this.betweenResponseDelay, abort)(void 0);
-            } catch (error4) {
-              stream.notifyError(error4);
+            } catch (error5) {
+              stream.notifyError(error5);
               return;
             }
           }
@@ -71380,8 +71380,8 @@ var require_util9 = __commonJS({
           (0, core_1.setSecret)(signature);
           (0, core_1.setSecret)(encodeURIComponent(signature));
         }
-      } catch (error4) {
-        (0, core_1.debug)(`Failed to parse URL: ${url} ${error4 instanceof Error ? error4.message : String(error4)}`);
+      } catch (error5) {
+        (0, core_1.debug)(`Failed to parse URL: ${url} ${error5 instanceof Error ? error5.message : String(error5)}`);
       }
     }
     exports2.maskSigUrl = maskSigUrl;
@@ -71477,8 +71477,8 @@ var require_cacheTwirpClient = __commonJS({
               return this.httpClient.post(url, JSON.stringify(data), headers);
             }));
             return body;
-          } catch (error4) {
-            throw new Error(`Failed to ${method}: ${error4.message}`);
+          } catch (error5) {
+            throw new Error(`Failed to ${method}: ${error5.message}`);
           }
         });
       }
@@ -71509,18 +71509,18 @@ var require_cacheTwirpClient = __commonJS({
                 }
                 errorMessage = `${errorMessage}: ${body.msg}`;
               }
-            } catch (error4) {
-              if (error4 instanceof SyntaxError) {
+            } catch (error5) {
+              if (error5 instanceof SyntaxError) {
                 (0, core_1.debug)(`Raw Body: ${rawBody}`);
               }
-              if (error4 instanceof errors_1.UsageError) {
-                throw error4;
+              if (error5 instanceof errors_1.UsageError) {
+                throw error5;
               }
-              if (errors_1.NetworkError.isNetworkErrorCode(error4 === null || error4 === void 0 ? void 0 : error4.code)) {
-                throw new errors_1.NetworkError(error4 === null || error4 === void 0 ? void 0 : error4.code);
+              if (errors_1.NetworkError.isNetworkErrorCode(error5 === null || error5 === void 0 ? void 0 : error5.code)) {
+                throw new errors_1.NetworkError(error5 === null || error5 === void 0 ? void 0 : error5.code);
               }
               isRetryable = true;
-              errorMessage = error4.message;
+              errorMessage = error5.message;
             }
             if (!isRetryable) {
               throw new Error(`Received non-retryable error: ${errorMessage}`);
@@ -71788,8 +71788,8 @@ var require_tar = __commonJS({
               cwd,
               env: Object.assign(Object.assign({}, process.env), { MSYS: "winsymlinks:nativestrict" })
             });
-          } catch (error4) {
-            throw new Error(`${command.split(" ")[0]} failed with error: ${error4 === null || error4 === void 0 ? void 0 : error4.message}`);
+          } catch (error5) {
+            throw new Error(`${command.split(" ")[0]} failed with error: ${error5 === null || error5 === void 0 ? void 0 : error5.message}`);
           }
         }
       });
@@ -71881,7 +71881,7 @@ var require_cache4 = __commonJS({
     };
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.saveCache = exports2.restoreCache = exports2.isFeatureAvailable = exports2.FinalizeCacheError = exports2.ReserveCacheError = exports2.ValidationError = void 0;
-    var core8 = __importStar2(require_core());
+    var core9 = __importStar2(require_core());
     var path4 = __importStar2(require("path"));
     var utils = __importStar2(require_cacheUtils());
     var cacheHttpClient = __importStar2(require_cacheHttpClient());
@@ -71941,7 +71941,7 @@ var require_cache4 = __commonJS({
     function restoreCache3(paths, primaryKey, restoreKeys, options, enableCrossOsArchive = false) {
       return __awaiter2(this, void 0, void 0, function* () {
         const cacheServiceVersion = (0, config_1.getCacheServiceVersion)();
-        core8.debug(`Cache service version: ${cacheServiceVersion}`);
+        core9.debug(`Cache service version: ${cacheServiceVersion}`);
         checkPaths(paths);
         switch (cacheServiceVersion) {
           case "v2":
@@ -71957,8 +71957,8 @@ var require_cache4 = __commonJS({
       return __awaiter2(this, void 0, void 0, function* () {
         restoreKeys = restoreKeys || [];
         const keys = [primaryKey, ...restoreKeys];
-        core8.debug("Resolved Keys:");
-        core8.debug(JSON.stringify(keys));
+        core9.debug("Resolved Keys:");
+        core9.debug(JSON.stringify(keys));
         if (keys.length > 10) {
           throw new ValidationError(`Key Validation Error: Keys are limited to a maximum of 10.`);
         }
@@ -71976,36 +71976,36 @@ var require_cache4 = __commonJS({
             return void 0;
           }
           if (options === null || options === void 0 ? void 0 : options.lookupOnly) {
-            core8.info("Lookup only - skipping download");
+            core9.info("Lookup only - skipping download");
             return cacheEntry.cacheKey;
           }
           archivePath = path4.join(yield utils.createTempDirectory(), utils.getCacheFileName(compressionMethod));
-          core8.debug(`Archive Path: ${archivePath}`);
+          core9.debug(`Archive Path: ${archivePath}`);
           yield cacheHttpClient.downloadCache(cacheEntry.archiveLocation, archivePath, options);
-          if (core8.isDebug()) {
+          if (core9.isDebug()) {
             yield (0, tar_1.listTar)(archivePath, compressionMethod);
           }
           const archiveFileSize = utils.getArchiveFileSizeInBytes(archivePath);
-          core8.info(`Cache Size: ~${Math.round(archiveFileSize / (1024 * 1024))} MB (${archiveFileSize} B)`);
+          core9.info(`Cache Size: ~${Math.round(archiveFileSize / (1024 * 1024))} MB (${archiveFileSize} B)`);
           yield (0, tar_1.extractTar)(archivePath, compressionMethod);
-          core8.info("Cache restored successfully");
+          core9.info("Cache restored successfully");
           return cacheEntry.cacheKey;
-        } catch (error4) {
-          const typedError = error4;
+        } catch (error5) {
+          const typedError = error5;
           if (typedError.name === ValidationError.name) {
-            throw error4;
+            throw error5;
           } else {
             if (typedError instanceof http_client_1.HttpClientError && typeof typedError.statusCode === "number" && typedError.statusCode >= 500) {
-              core8.error(`Failed to restore: ${error4.message}`);
+              core9.error(`Failed to restore: ${error5.message}`);
             } else {
-              core8.warning(`Failed to restore: ${error4.message}`);
+              core9.warning(`Failed to restore: ${error5.message}`);
             }
           }
         } finally {
           try {
             yield utils.unlinkFile(archivePath);
-          } catch (error4) {
-            core8.debug(`Failed to delete archive: ${error4}`);
+          } catch (error5) {
+            core9.debug(`Failed to delete archive: ${error5}`);
           }
         }
         return void 0;
@@ -72016,8 +72016,8 @@ var require_cache4 = __commonJS({
         options = Object.assign(Object.assign({}, options), { useAzureSdk: true });
         restoreKeys = restoreKeys || [];
         const keys = [primaryKey, ...restoreKeys];
-        core8.debug("Resolved Keys:");
-        core8.debug(JSON.stringify(keys));
+        core9.debug("Resolved Keys:");
+        core9.debug(JSON.stringify(keys));
         if (keys.length > 10) {
           throw new ValidationError(`Key Validation Error: Keys are limited to a maximum of 10.`);
         }
@@ -72035,40 +72035,40 @@ var require_cache4 = __commonJS({
           };
           const response = yield twirpClient.GetCacheEntryDownloadURL(request);
           if (!response.ok) {
-            core8.debug(`Cache not found for version ${request.version} of keys: ${keys.join(", ")}`);
+            core9.debug(`Cache not found for version ${request.version} of keys: ${keys.join(", ")}`);
             return void 0;
           }
           const isRestoreKeyMatch = request.key !== response.matchedKey;
           if (isRestoreKeyMatch) {
-            core8.info(`Cache hit for restore-key: ${response.matchedKey}`);
+            core9.info(`Cache hit for restore-key: ${response.matchedKey}`);
           } else {
-            core8.info(`Cache hit for: ${response.matchedKey}`);
+            core9.info(`Cache hit for: ${response.matchedKey}`);
           }
           if (options === null || options === void 0 ? void 0 : options.lookupOnly) {
-            core8.info("Lookup only - skipping download");
+            core9.info("Lookup only - skipping download");
             return response.matchedKey;
           }
           archivePath = path4.join(yield utils.createTempDirectory(), utils.getCacheFileName(compressionMethod));
-          core8.debug(`Archive path: ${archivePath}`);
-          core8.debug(`Starting download of archive to: ${archivePath}`);
+          core9.debug(`Archive path: ${archivePath}`);
+          core9.debug(`Starting download of archive to: ${archivePath}`);
           yield cacheHttpClient.downloadCache(response.signedDownloadUrl, archivePath, options);
           const archiveFileSize = utils.getArchiveFileSizeInBytes(archivePath);
-          core8.info(`Cache Size: ~${Math.round(archiveFileSize / (1024 * 1024))} MB (${archiveFileSize} B)`);
-          if (core8.isDebug()) {
+          core9.info(`Cache Size: ~${Math.round(archiveFileSize / (1024 * 1024))} MB (${archiveFileSize} B)`);
+          if (core9.isDebug()) {
             yield (0, tar_1.listTar)(archivePath, compressionMethod);
           }
           yield (0, tar_1.extractTar)(archivePath, compressionMethod);
-          core8.info("Cache restored successfully");
+          core9.info("Cache restored successfully");
           return response.matchedKey;
-        } catch (error4) {
-          const typedError = error4;
+        } catch (error5) {
+          const typedError = error5;
           if (typedError.name === ValidationError.name) {
-            throw error4;
+            throw error5;
           } else {
             if (typedError instanceof http_client_1.HttpClientError && typeof typedError.statusCode === "number" && typedError.statusCode >= 500) {
-              core8.error(`Failed to restore: ${error4.message}`);
+              core9.error(`Failed to restore: ${error5.message}`);
             } else {
-              core8.warning(`Failed to restore: ${error4.message}`);
+              core9.warning(`Failed to restore: ${error5.message}`);
             }
           }
         } finally {
@@ -72076,8 +72076,8 @@ var require_cache4 = __commonJS({
             if (archivePath) {
               yield utils.unlinkFile(archivePath);
             }
-          } catch (error4) {
-            core8.debug(`Failed to delete archive: ${error4}`);
+          } catch (error5) {
+            core9.debug(`Failed to delete archive: ${error5}`);
           }
         }
         return void 0;
@@ -72086,7 +72086,7 @@ var require_cache4 = __commonJS({
     function saveCache3(paths, key, options, enableCrossOsArchive = false) {
       return __awaiter2(this, void 0, void 0, function* () {
         const cacheServiceVersion = (0, config_1.getCacheServiceVersion)();
-        core8.debug(`Cache service version: ${cacheServiceVersion}`);
+        core9.debug(`Cache service version: ${cacheServiceVersion}`);
         checkPaths(paths);
         checkKey(key);
         switch (cacheServiceVersion) {
@@ -72105,26 +72105,26 @@ var require_cache4 = __commonJS({
         const compressionMethod = yield utils.getCompressionMethod();
         let cacheId = -1;
         const cachePaths = yield utils.resolvePaths(paths);
-        core8.debug("Cache Paths:");
-        core8.debug(`${JSON.stringify(cachePaths)}`);
+        core9.debug("Cache Paths:");
+        core9.debug(`${JSON.stringify(cachePaths)}`);
         if (cachePaths.length === 0) {
           throw new Error(`Path Validation Error: Path(s) specified in the action for caching do(es) not exist, hence no cache is being saved.`);
         }
         const archiveFolder = yield utils.createTempDirectory();
         const archivePath = path4.join(archiveFolder, utils.getCacheFileName(compressionMethod));
-        core8.debug(`Archive Path: ${archivePath}`);
+        core9.debug(`Archive Path: ${archivePath}`);
         try {
           yield (0, tar_1.createTar)(archiveFolder, cachePaths, compressionMethod);
-          if (core8.isDebug()) {
+          if (core9.isDebug()) {
             yield (0, tar_1.listTar)(archivePath, compressionMethod);
           }
           const fileSizeLimit = 10 * 1024 * 1024 * 1024;
           const archiveFileSize = utils.getArchiveFileSizeInBytes(archivePath);
-          core8.debug(`File Size: ${archiveFileSize}`);
+          core9.debug(`File Size: ${archiveFileSize}`);
           if (archiveFileSize > fileSizeLimit && !(0, config_1.isGhes)()) {
             throw new Error(`Cache size of ~${Math.round(archiveFileSize / (1024 * 1024))} MB (${archiveFileSize} B) is over the 10GB limit, not saving cache.`);
           }
-          core8.debug("Reserving Cache");
+          core9.debug("Reserving Cache");
           const reserveCacheResponse = yield cacheHttpClient.reserveCache(key, paths, {
             compressionMethod,
             enableCrossOsArchive,
@@ -72137,26 +72137,26 @@ var require_cache4 = __commonJS({
           } else {
             throw new ReserveCacheError(`Unable to reserve cache with key ${key}, another job may be creating this cache. More details: ${(_e = reserveCacheResponse === null || reserveCacheResponse === void 0 ? void 0 : reserveCacheResponse.error) === null || _e === void 0 ? void 0 : _e.message}`);
           }
-          core8.debug(`Saving Cache (ID: ${cacheId})`);
+          core9.debug(`Saving Cache (ID: ${cacheId})`);
           yield cacheHttpClient.saveCache(cacheId, archivePath, "", options);
-        } catch (error4) {
-          const typedError = error4;
+        } catch (error5) {
+          const typedError = error5;
           if (typedError.name === ValidationError.name) {
-            throw error4;
+            throw error5;
           } else if (typedError.name === ReserveCacheError.name) {
-            core8.info(`Failed to save: ${typedError.message}`);
+            core9.info(`Failed to save: ${typedError.message}`);
           } else {
             if (typedError instanceof http_client_1.HttpClientError && typeof typedError.statusCode === "number" && typedError.statusCode >= 500) {
-              core8.error(`Failed to save: ${typedError.message}`);
+              core9.error(`Failed to save: ${typedError.message}`);
             } else {
-              core8.warning(`Failed to save: ${typedError.message}`);
+              core9.warning(`Failed to save: ${typedError.message}`);
             }
           }
         } finally {
           try {
             yield utils.unlinkFile(archivePath);
-          } catch (error4) {
-            core8.debug(`Failed to delete archive: ${error4}`);
+          } catch (error5) {
+            core9.debug(`Failed to delete archive: ${error5}`);
           }
         }
         return cacheId;
@@ -72169,23 +72169,23 @@ var require_cache4 = __commonJS({
         const twirpClient = cacheTwirpClient.internalCacheTwirpClient();
         let cacheId = -1;
         const cachePaths = yield utils.resolvePaths(paths);
-        core8.debug("Cache Paths:");
-        core8.debug(`${JSON.stringify(cachePaths)}`);
+        core9.debug("Cache Paths:");
+        core9.debug(`${JSON.stringify(cachePaths)}`);
         if (cachePaths.length === 0) {
           throw new Error(`Path Validation Error: Path(s) specified in the action for caching do(es) not exist, hence no cache is being saved.`);
         }
         const archiveFolder = yield utils.createTempDirectory();
         const archivePath = path4.join(archiveFolder, utils.getCacheFileName(compressionMethod));
-        core8.debug(`Archive Path: ${archivePath}`);
+        core9.debug(`Archive Path: ${archivePath}`);
         try {
           yield (0, tar_1.createTar)(archiveFolder, cachePaths, compressionMethod);
-          if (core8.isDebug()) {
+          if (core9.isDebug()) {
             yield (0, tar_1.listTar)(archivePath, compressionMethod);
           }
           const archiveFileSize = utils.getArchiveFileSizeInBytes(archivePath);
-          core8.debug(`File Size: ${archiveFileSize}`);
+          core9.debug(`File Size: ${archiveFileSize}`);
           options.archiveSizeBytes = archiveFileSize;
-          core8.debug("Reserving Cache");
+          core9.debug("Reserving Cache");
           const version = utils.getCacheVersion(paths, compressionMethod, enableCrossOsArchive);
           const request = {
             key,
@@ -72196,16 +72196,16 @@ var require_cache4 = __commonJS({
             const response = yield twirpClient.CreateCacheEntry(request);
             if (!response.ok) {
               if (response.message) {
-                core8.warning(`Cache reservation failed: ${response.message}`);
+                core9.warning(`Cache reservation failed: ${response.message}`);
               }
               throw new Error(response.message || "Response was not ok");
             }
             signedUploadUrl = response.signedUploadUrl;
-          } catch (error4) {
-            core8.debug(`Failed to reserve cache: ${error4}`);
+          } catch (error5) {
+            core9.debug(`Failed to reserve cache: ${error5}`);
             throw new ReserveCacheError(`Unable to reserve cache with key ${key}, another job may be creating this cache.`);
           }
-          core8.debug(`Attempting to upload cache located at: ${archivePath}`);
+          core9.debug(`Attempting to upload cache located at: ${archivePath}`);
           yield cacheHttpClient.saveCache(cacheId, archivePath, signedUploadUrl, options);
           const finalizeRequest = {
             key,
@@ -72213,7 +72213,7 @@ var require_cache4 = __commonJS({
             sizeBytes: `${archiveFileSize}`
           };
           const finalizeResponse = yield twirpClient.FinalizeCacheEntryUpload(finalizeRequest);
-          core8.debug(`FinalizeCacheEntryUploadResponse: ${finalizeResponse.ok}`);
+          core9.debug(`FinalizeCacheEntryUploadResponse: ${finalizeResponse.ok}`);
           if (!finalizeResponse.ok) {
             if (finalizeResponse.message) {
               throw new FinalizeCacheError(finalizeResponse.message);
@@ -72221,26 +72221,26 @@ var require_cache4 = __commonJS({
             throw new Error(`Unable to finalize cache with key ${key}, another job may be finalizing this cache.`);
           }
           cacheId = parseInt(finalizeResponse.entryId);
-        } catch (error4) {
-          const typedError = error4;
+        } catch (error5) {
+          const typedError = error5;
           if (typedError.name === ValidationError.name) {
-            throw error4;
+            throw error5;
           } else if (typedError.name === ReserveCacheError.name) {
-            core8.info(`Failed to save: ${typedError.message}`);
+            core9.info(`Failed to save: ${typedError.message}`);
           } else if (typedError.name === FinalizeCacheError.name) {
-            core8.warning(typedError.message);
+            core9.warning(typedError.message);
           } else {
             if (typedError instanceof http_client_1.HttpClientError && typeof typedError.statusCode === "number" && typedError.statusCode >= 500) {
-              core8.error(`Failed to save: ${typedError.message}`);
+              core9.error(`Failed to save: ${typedError.message}`);
             } else {
-              core8.warning(`Failed to save: ${typedError.message}`);
+              core9.warning(`Failed to save: ${typedError.message}`);
             }
           }
         } finally {
           try {
             yield utils.unlinkFile(archivePath);
-          } catch (error4) {
-            core8.debug(`Failed to delete archive: ${error4}`);
+          } catch (error5) {
+            core9.debug(`Failed to delete archive: ${error5}`);
           }
         }
         return cacheId;
@@ -72250,7 +72250,7 @@ var require_cache4 = __commonJS({
 });
 
 // src/index.ts
-var core7 = __toESM(require_core());
+var core8 = __toESM(require_core());
 var github3 = __toESM(require_github());
 var cache2 = __toESM(require_cache4());
 var path3 = __toESM(require("path"));
@@ -72281,8 +72281,8 @@ async function restoreWorkspace(workspacePath, repo) {
       core.info(`No cache found, starting with fresh workspace`);
       initializeWorkspace(workspacePath);
     }
-  } catch (error4) {
-    core.warning(`Failed to restore cache: ${error4}`);
+  } catch (error5) {
+    core.warning(`Failed to restore cache: ${error5}`);
     initializeWorkspace(workspacePath);
   }
   return loadWorkspace(workspacePath);
@@ -72368,14 +72368,14 @@ async function saveWorkspace(workspacePath, repo) {
   try {
     await cache.saveCache([workspacePath], cacheKey);
     core.info(`Workspace cached with key: ${cacheKey}`);
-  } catch (error4) {
-    core.warning(`Failed to save cache: ${error4}`);
+  } catch (error5) {
+    core.warning(`Failed to save cache: ${error5}`);
   }
 }
 
 // src/triggers.ts
 var github2 = __toESM(require_github());
-var core4 = __toESM(require_core());
+var core5 = __toESM(require_core());
 
 // src/context.ts
 var github = __toESM(require_github());
@@ -74992,8 +74992,8 @@ function loadConfig() {
         const config = load(content);
         core3.info(`Loaded config from ${configPath}`);
         return { ...DEFAULT_CONFIG, ...config, context: { ...DEFAULT_CONFIG.context, ...config?.context } };
-      } catch (error4) {
-        core3.warning(`Failed to parse ${configPath}: ${error4}`);
+      } catch (error5) {
+        core3.warning(`Failed to parse ${configPath}: ${error5}`);
       }
     }
   }
@@ -75011,8 +75011,8 @@ async function fetchReadme(octokit, owner, repo, maxChars = 4e3) {
       content = content.substring(0, maxChars) + "\n\n... (README truncated)";
     }
     return content;
-  } catch (error4) {
-    core3.debug(`Failed to fetch README: ${error4}`);
+  } catch (error5) {
+    core3.debug(`Failed to fetch README: ${error5}`);
     return void 0;
   }
 }
@@ -75029,8 +75029,8 @@ async function fetchRecentCommits(octokit, owner, repo, count = 10) {
       const author = c.commit.author?.name || c.author?.login || "unknown";
       return `${sha} ${msg} (${author})`;
     });
-  } catch (error4) {
-    core3.debug(`Failed to fetch commits: ${error4}`);
+  } catch (error5) {
+    core3.debug(`Failed to fetch commits: ${error5}`);
     return [];
   }
 }
@@ -75049,8 +75049,8 @@ async function fetchOpenIssues(octokit, owner, repo, maxIssues = 15) {
       title: i.title,
       labels: i.labels.map((l) => typeof l === "string" ? l : l.name || "").filter(Boolean)
     }));
-  } catch (error4) {
-    core3.debug(`Failed to fetch issues: ${error4}`);
+  } catch (error5) {
+    core3.debug(`Failed to fetch issues: ${error5}`);
     return [];
   }
 }
@@ -75110,20 +75110,198 @@ async function getFormattedContext(githubToken) {
   return formatContextForPrompt(repoContext);
 }
 
+// src/review.ts
+var core4 = __toESM(require_core());
+async function fetchPRDiff(octokit, owner, repo, pullNumber, maxChars = 5e4) {
+  try {
+    const { data } = await octokit.rest.pulls.get({
+      owner,
+      repo,
+      pull_number: pullNumber,
+      mediaType: { format: "diff" }
+    });
+    let diff = typeof data === "string" ? data : String(data);
+    if (diff.length > maxChars) {
+      diff = diff.substring(0, maxChars) + "\n\n... (diff truncated)";
+    }
+    return diff;
+  } catch (error5) {
+    core4.warning(`Failed to fetch PR diff: ${error5}`);
+    return "";
+  }
+}
+async function fetchPRFiles(octokit, owner, repo, pullNumber) {
+  try {
+    const { data: files } = await octokit.rest.pulls.listFiles({
+      owner,
+      repo,
+      pull_number: pullNumber,
+      per_page: 100
+    });
+    return files.map((f) => ({
+      filename: f.filename,
+      patch: f.patch,
+      status: f.status
+    }));
+  } catch (error5) {
+    core4.warning(`Failed to fetch PR files: ${error5}`);
+    return [];
+  }
+}
+function parseReviewResponse(response) {
+  const result = {
+    summary: "",
+    comments: [],
+    verdict: "comment"
+  };
+  const verdictMatch = response.match(/VERDICT:\s*(approve|request_changes|comment)/i);
+  if (verdictMatch) {
+    result.verdict = verdictMatch[1].toLowerCase();
+  }
+  const summaryMatch = response.match(/## Summary\s*\n([\s\S]*?)(?=\n## Comments|\n### FILE:|$)/i);
+  if (summaryMatch) {
+    result.summary = summaryMatch[1].trim();
+  } else {
+    result.summary = response.replace(/---\s*VERDICT:.*?---/is, "").trim();
+  }
+  const commentPattern = /### FILE:\s*(\S+)\s+LINE:\s*(\d+)\s*\n([\s\S]*?)(?=\n### FILE:|$)/gi;
+  let match;
+  while ((match = commentPattern.exec(response)) !== null) {
+    const [, path4, lineStr, body] = match;
+    const line = parseInt(lineStr, 10);
+    if (path4 && !isNaN(line) && body.trim()) {
+      result.comments.push({
+        path: path4.trim(),
+        line,
+        body: body.trim()
+      });
+    }
+  }
+  return result;
+}
+function findDiffPosition(patch, targetLine) {
+  if (!patch) return null;
+  const lines = patch.split("\n");
+  let diffPosition = 0;
+  let currentLine = 0;
+  for (const line of lines) {
+    diffPosition++;
+    const hunkMatch = line.match(/^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@/);
+    if (hunkMatch) {
+      currentLine = parseInt(hunkMatch[1], 10) - 1;
+      continue;
+    }
+    if (line.startsWith("-")) {
+      continue;
+    }
+    if (line.startsWith("+") || line.startsWith(" ") || !line.startsWith("\\")) {
+      currentLine++;
+      if (currentLine === targetLine) {
+        return diffPosition;
+      }
+    }
+  }
+  return null;
+}
+async function postPRReview(octokit, owner, repo, pullNumber, review, files) {
+  const fileMap = new Map(files.map((f) => [f.filename, f.patch]));
+  const reviewComments = [];
+  for (const comment of review.comments) {
+    const patch = fileMap.get(comment.path);
+    const position = findDiffPosition(patch, comment.line);
+    if (position !== null) {
+      reviewComments.push({
+        path: comment.path,
+        position,
+        body: comment.body
+      });
+    } else {
+      review.summary += `
+
+**${comment.path}:${comment.line}**
+${comment.body}`;
+    }
+  }
+  const eventMap = {
+    approve: "APPROVE",
+    request_changes: "REQUEST_CHANGES",
+    comment: "COMMENT"
+  };
+  const event = eventMap[review.verdict] || "COMMENT";
+  try {
+    await octokit.rest.pulls.createReview({
+      owner,
+      repo,
+      pull_number: pullNumber,
+      body: `\u{1F916} **OpenClaw Bot Review**
+
+${review.summary}`,
+      event,
+      comments: reviewComments.length > 0 ? reviewComments : void 0
+    });
+    core4.info(`Posted PR review: ${event} with ${reviewComments.length} inline comments`);
+  } catch (error5) {
+    core4.error(`Failed to post PR review: ${error5}`);
+    throw error5;
+  }
+}
+function getReviewInstructions() {
+  return `
+## PR Review Instructions
+
+You are reviewing a pull request. Analyze the diff carefully and provide a structured review.
+
+**Your response MUST follow this exact format:**
+
+\`\`\`
+---
+VERDICT: comment
+---
+
+## Summary
+
+[Your overall assessment of the PR. Be constructive and specific.]
+
+## Comments
+
+### FILE: path/to/file.ts LINE: 42
+[Specific feedback about this line. Explain the issue and suggest a fix.]
+
+### FILE: another/file.js LINE: 15
+[Another inline comment...]
+\`\`\`
+
+**VERDICT options:**
+- \`approve\` \u2014 The PR is good to merge
+- \`request_changes\` \u2014 Changes are required before merging
+- \`comment\` \u2014 Just providing feedback, no approval/rejection
+
+**Guidelines:**
+- Focus on bugs, security issues, and significant improvements
+- Be specific \u2014 reference actual code from the diff
+- Suggest concrete fixes, not vague advice
+- Keep comments concise and actionable
+- Don't nitpick style unless it's a real problem
+- If the PR looks good, say so briefly and approve
+
+**Important:** Your inline comments (### FILE: ... LINE: ...) will be posted as GitHub review comments directly on those lines.
+`;
+}
+
 // src/triggers.ts
 async function parseTrigger(githubToken) {
   const context4 = github2.context;
   const octokit = github2.getOctokit(githubToken);
-  core4.info(`Event: ${context4.eventName}, Action: ${context4.payload.action}`);
-  core4.info("Building repository context...");
+  core5.info(`Event: ${context4.eventName}, Action: ${context4.payload.action}`);
+  core5.info("Building repository context...");
   let repoContext = "";
   try {
     repoContext = await getFormattedContext(githubToken);
     if (repoContext) {
-      core4.info(`Context built: ${repoContext.length} chars`);
+      core5.info(`Context built: ${repoContext.length} chars`);
     }
-  } catch (error4) {
-    core4.warning(`Failed to build repo context: ${error4}`);
+  } catch (error5) {
+    core5.warning(`Failed to build repo context: ${error5}`);
   }
   if (context4.eventName === "schedule") {
     const message2 = repoContext ? `${repoContext}
@@ -75186,30 +75364,37 @@ ${eventMessage2}` : eventMessage2;
   }
   if (context4.eventName === "pull_request" && (context4.payload.action === "opened" || context4.payload.action === "synchronize" || context4.payload.action === "reopened")) {
     const pr = context4.payload.pull_request;
-    let filesChanged = [];
-    try {
-      const { data: files } = await octokit.rest.pulls.listFiles({
-        owner: context4.repo.owner,
-        repo: context4.repo.repo,
-        pull_number: pr.number
-      });
-      filesChanged = files.map((f) => `${f.status}: ${f.filename} (+${f.additions}/-${f.deletions})`);
-    } catch (error4) {
-      core4.warning(`Failed to fetch PR files: ${error4}`);
-    }
-    const diffSummary = filesChanged.length > 0 ? `
+    const { owner, repo } = context4.repo;
+    core5.info("Fetching PR diff for review...");
+    const diff = await fetchPRDiff(octokit, owner, repo, pr.number);
+    const prFiles = await fetchPRFiles(octokit, owner, repo, pr.number);
+    core5.info(`Fetched diff: ${diff.length} chars, ${prFiles.length} files`);
+    const filesSummary = prFiles.length > 0 ? `
 
-Files changed:
-${filesChanged.slice(0, 20).join("\n")}${filesChanged.length > 20 ? `
-... and ${filesChanged.length - 20} more files` : ""}` : "";
-    const eventMessage2 = `PR #${pr.number} by @${pr.user.login}: ${pr.title}
+Files changed (${prFiles.length}):
+${prFiles.slice(0, 20).map((f) => `- ${f.status}: ${f.filename}`).join("\n")}${prFiles.length > 20 ? `
+... and ${prFiles.length - 20} more files` : ""}` : "";
+    const reviewInstructions = getReviewInstructions();
+    const prInfo = `PR #${pr.number} by @${pr.user.login}: ${pr.title}
 
-${pr.body || "(no description)"}${diffSummary}
-
----
+${pr.body || "(no description)"}${filesSummary}
 
 PR URL: ${pr.html_url}
 Branch: ${pr.head.ref} \u2192 ${pr.base.ref}`;
+    const diffSection = diff ? `
+
+## Diff
+
+\`\`\`diff
+${diff}
+\`\`\`` : "";
+    const eventMessage2 = `${reviewInstructions}
+
+---
+
+## Pull Request
+
+${prInfo}${diffSection}`;
     const message2 = repoContext ? `${repoContext}
 
 ---
@@ -75220,7 +75405,8 @@ ${eventMessage2}` : eventMessage2;
       message: message2,
       repoContext,
       issueNumber: pr.number,
-      isPR: true
+      isPR: true,
+      prFiles
     };
   }
   if (context4.eventName === "pull_request_review_comment" && context4.payload.action === "created") {
@@ -75276,7 +75462,7 @@ ${eventMessage}` : eventMessage;
 }
 
 // src/gateway.ts
-var core5 = __toESM(require_core());
+var core6 = __toESM(require_core());
 var fs3 = __toESM(require("fs"));
 var path2 = __toESM(require("path"));
 var import_child_process = require("child_process");
@@ -75307,7 +75493,7 @@ function resolveModel(provider, model) {
   return DEFAULT_MODELS[provider] || `${provider}/default`;
 }
 async function startGateway(config) {
-  core5.info("Starting OpenClaw Gateway...");
+  core6.info("Starting OpenClaw Gateway...");
   const homeDir = process.env.HOME || process.env.USERPROFILE || ".";
   const configDir = path2.join(homeDir, ".openclaw");
   fs3.mkdirSync(configDir, { recursive: true });
@@ -75343,8 +75529,8 @@ async function startGateway(config) {
   globalThis.__openclawGatewayToken = gatewayToken;
   const configPath = path2.join(configDir, "openclaw.json");
   fs3.writeFileSync(configPath, JSON.stringify(openclawConfig, null, 2));
-  core5.info(`Config: provider=${config.provider}, model=${resolvedModel}`);
-  core5.info(`Config path: ${configPath}, workspace: ${config.workspacePath}`);
+  core6.info(`Config: provider=${config.provider}, model=${resolvedModel}`);
+  core6.info(`Config path: ${configPath}, workspace: ${config.workspacePath}`);
   const envKey = PROVIDER_ENV_MAP[config.provider] || `${config.provider.toUpperCase()}_API_KEY`;
   const env = {
     ...process.env,
@@ -75359,25 +75545,25 @@ async function startGateway(config) {
       stdio: ["ignore", "pipe", "pipe"]
     });
     gatewayProcess.stdout?.on("data", (data) => {
-      core5.info(`[Gateway] ${data.toString().trim()}`);
+      core6.info(`[Gateway] ${data.toString().trim()}`);
     });
     gatewayProcess.stderr?.on("data", (data) => {
-      core5.error(`[Gateway] ${data.toString().trim()}`);
+      core6.error(`[Gateway] ${data.toString().trim()}`);
     });
-    gatewayProcess.on("error", (error4) => {
-      core5.error(`Gateway process error: ${error4}`);
-      reject(error4);
+    gatewayProcess.on("error", (error5) => {
+      core6.error(`Gateway process error: ${error5}`);
+      reject(error5);
     });
     gatewayProcess.on("exit", (code) => {
       if (code !== 0 && code !== null) {
-        core5.warning(`Gateway exited with code ${code}`);
+        core6.warning(`Gateway exited with code ${code}`);
       }
     });
     setTimeout(() => resolve2(), 2e3);
   });
 }
 async function waitForReady(timeoutMs = 3e4) {
-  core5.info("Waiting for Gateway to be ready...");
+  core6.info("Waiting for Gateway to be ready...");
   const startTime = Date.now();
   const token = globalThis.__openclawGatewayToken || "";
   while (Date.now() - startTime < timeoutMs) {
@@ -75393,7 +75579,7 @@ async function waitForReady(timeoutMs = 3e4) {
         ws.on("error", reject);
         setTimeout(() => reject(new Error("timeout")), 2e3);
       });
-      core5.info("Gateway is ready!");
+      core6.info("Gateway is ready!");
       return;
     } catch {
       await new Promise((resolve2) => setTimeout(resolve2, 1e3));
@@ -75403,7 +75589,7 @@ async function waitForReady(timeoutMs = 3e4) {
 }
 async function stopGateway() {
   if (!gatewayProcess) return;
-  core5.info("Stopping Gateway...");
+  core6.info("Stopping Gateway...");
   return new Promise((resolve2) => {
     if (!gatewayProcess) {
       resolve2();
@@ -75411,7 +75597,7 @@ async function stopGateway() {
     }
     gatewayProcess.on("exit", () => {
       gatewayProcess = null;
-      core5.info("Gateway stopped");
+      core6.info("Gateway stopped");
       resolve2();
     });
     gatewayProcess.kill("SIGTERM");
@@ -75426,7 +75612,7 @@ async function stopGateway() {
 }
 
 // src/client.ts
-var core6 = __toESM(require_core());
+var core7 = __toESM(require_core());
 var crypto2 = __toESM(require("crypto"));
 var import_ws = __toESM(require("ws"));
 var ED25519_SPKI_PREFIX = Buffer.from("302a300506032b6570032100", "hex");
@@ -75496,13 +75682,13 @@ var OpenClawClient = class {
   deviceIdentity;
   constructor() {
     this.deviceIdentity = generateDeviceIdentity();
-    core6.info(`Device identity generated (id=${this.deviceIdentity.deviceId.substring(0, 16)}...)`);
+    core7.info(`Device identity generated (id=${this.deviceIdentity.deviceId.substring(0, 16)}...)`);
   }
   /**
    * Connect to the OpenClaw Gateway (with timeout)
    */
   async connect(timeoutMs = 3e4) {
-    core6.info("Connecting to OpenClaw Gateway...");
+    core7.info("Connecting to OpenClaw Gateway...");
     return new Promise((resolve2, reject) => {
       this.connectResolve = resolve2;
       this.connectReject = reject;
@@ -75527,12 +75713,12 @@ var OpenClawClient = class {
       const wsUrl = token ? `ws://localhost:18789?token=${token}` : "ws://localhost:18789";
       this.ws = new import_ws.default(wsUrl);
       this.ws.on("open", () => {
-        core6.info("WebSocket connected, waiting for connect.challenge...");
+        core7.info("WebSocket connected, waiting for connect.challenge...");
       });
-      this.ws.on("error", (error4) => {
-        core6.error(`WebSocket error: ${error4}`);
+      this.ws.on("error", (error5) => {
+        core7.error(`WebSocket error: ${error5}`);
         if (this.connectReject) {
-          this.connectReject(error4 instanceof Error ? error4 : new Error(String(error4)));
+          this.connectReject(error5 instanceof Error ? error5 : new Error(String(error5)));
           this.connectReject = null;
           this.connectResolve = null;
         }
@@ -75541,7 +75727,7 @@ var OpenClawClient = class {
         this.handleMessage(data.toString());
       });
       this.ws.on("close", (code, reason) => {
-        core6.info(`WebSocket closed (code=${code}, reason=${reason || "none"})`);
+        core7.info(`WebSocket closed (code=${code}, reason=${reason || "none"})`);
         if (this.connectReject) {
           this.connectReject(new Error(`WebSocket closed during handshake (code=${code})`));
           this.connectReject = null;
@@ -75564,7 +75750,7 @@ var OpenClawClient = class {
     if (!this.ws) {
       throw new Error("Not connected");
     }
-    core6.info(`Sending message to agent (${text.length} chars)...`);
+    core7.info(`Sending message to agent (${text.length} chars)...`);
     this.lifecycleEndPromise = new Promise((resolve2) => {
       this.lifecycleEndResolve = resolve2;
     });
@@ -75594,7 +75780,7 @@ var OpenClawClient = class {
     });
     this.send(request);
     const acceptPayload = await acceptedPromise;
-    core6.info(`Agent request accepted (runId=${acceptPayload?.runId ?? "unknown"}), waiting for completion...`);
+    core7.info(`Agent request accepted (runId=${acceptPayload?.runId ?? "unknown"}), waiting for completion...`);
     const timeoutPromise = new Promise(
       (_, reject) => setTimeout(() => reject(new Error("Agent lifecycle timeout after 480s (8 minutes)")), 48e4)
     );
@@ -75609,7 +75795,7 @@ var OpenClawClient = class {
     ]);
     this.pendingRequests.delete(id);
     this.agentCompletionResolve = null;
-    core6.info(`Agent response complete (${responseText.length} chars)`);
+    core7.info(`Agent response complete (${responseText.length} chars)`);
     return responseText;
   }
   /**
@@ -75652,14 +75838,14 @@ var OpenClawClient = class {
   handleMessage(data) {
     try {
       const message = JSON.parse(data);
-      core6.debug(`WS recv: ${JSON.stringify(message).substring(0, 500)}`);
+      core7.debug(`WS recv: ${JSON.stringify(message).substring(0, 500)}`);
       if (message.type === "res") {
         this.handleResponse(message);
       } else if (message.type === "event") {
         this.handleEvent(message);
       }
-    } catch (error4) {
-      core6.warning(`Failed to parse message: ${error4}`);
+    } catch (error5) {
+      core7.warning(`Failed to parse message: ${error5}`);
     }
   }
   /**
@@ -75667,11 +75853,11 @@ var OpenClawClient = class {
    */
   handleResponse(response) {
     const errStr = response.error ? typeof response.error === "object" ? response.error.message : String(response.error) : "";
-    core6.info(`RPC response: id=${response.id} ok=${response.ok} payload=${JSON.stringify(response.payload || errStr || "").substring(0, 200)}`);
+    core7.info(`RPC response: id=${response.id} ok=${response.ok} payload=${JSON.stringify(response.payload || errStr || "").substring(0, 200)}`);
     if (this.connectRequestId && response.id === this.connectRequestId) {
       this.connectRequestId = null;
       if (response.ok && response.payload?.type === "hello-ok") {
-        core6.info(`Connected! Protocol version: ${response.payload.protocol}`);
+        core7.info(`Connected! Protocol version: ${response.payload.protocol}`);
         if (this.connectResolve) {
           this.connectResolve();
           this.connectResolve = null;
@@ -75680,7 +75866,7 @@ var OpenClawClient = class {
       } else {
         const errMsg = response.error ? typeof response.error === "object" ? response.error.message : String(response.error) : JSON.stringify(response.payload);
         const err = new Error(`Connect rejected: ${errMsg}`);
-        core6.error(err.message);
+        core7.error(err.message);
         if (this.connectReject) {
           this.connectReject(err);
           this.connectReject = null;
@@ -75714,7 +75900,7 @@ var OpenClawClient = class {
         if (payload.status === "error") {
           this.pendingRequests.delete(response.id);
           const errText = payload.error ? typeof payload.error === "string" ? payload.error : payload.error.message || JSON.stringify(payload.error) : payload.summary || "Unknown error";
-          core6.error(`Agent returned error status: ${errText}`);
+          core7.error(`Agent returned error status: ${errText}`);
           if (this.agentCompletionResolve) {
             this.agentCompletionResolve(`\u26A0\uFE0F Error: ${errText}`);
             this.agentCompletionResolve = null;
@@ -75732,7 +75918,7 @@ var OpenClawClient = class {
         if (!resultText && payload.error) {
           resultText = typeof payload.error === "string" ? payload.error : JSON.stringify(payload.error);
         }
-        core6.info(`Agent completion received (${resultText.length} chars text)`);
+        core7.info(`Agent completion received (${resultText.length} chars text)`);
         if (this.agentCompletionResolve) {
           const streamed = this.streamBuffer.join("");
           this.agentCompletionResolve(streamed || resultText || "(empty response)");
@@ -75750,7 +75936,7 @@ var OpenClawClient = class {
   handleEvent(event) {
     if (event.event === "connect.challenge") {
       const nonce = event.payload?.nonce;
-      core6.info(`Received connect.challenge (nonce=${nonce?.substring(0, 8) ?? "none"}...), sending connect request...`);
+      core7.info(`Received connect.challenge (nonce=${nonce?.substring(0, 8) ?? "none"}...), sending connect request...`);
       const token = globalThis.__openclawGatewayToken || "";
       const connectId = this.nextId();
       this.connectRequestId = connectId;
@@ -75796,7 +75982,7 @@ var OpenClawClient = class {
           }
         }
       };
-      core6.info(`Sending connect request (id=${connectId})...`);
+      core7.info(`Sending connect request (id=${connectId})...`);
       this.send(connectRequest);
       return;
     }
@@ -75831,16 +76017,16 @@ var execAsync = (0, import_util.promisify)(import_child_process2.exec);
 async function run() {
   let client = null;
   try {
-    const apiKey = core7.getInput("api_key", { required: true });
-    const provider = core7.getInput("provider") || "anthropic";
-    const model = core7.getInput("model") || "";
-    const githubToken = core7.getInput("github_token") || process.env.GITHUB_TOKEN || "";
+    const apiKey = core8.getInput("api_key", { required: true });
+    const provider = core8.getInput("provider") || "anthropic";
+    const model = core8.getInput("model") || "";
+    const githubToken = core8.getInput("github_token") || process.env.GITHUB_TOKEN || "";
     const workspacePath = path3.resolve(".openclaw");
     const resolvedModel = resolveModel(provider, model);
-    core7.info("=== OpenClaw GitHub Bot ===");
-    core7.info(`Provider: ${provider}`);
-    core7.info(`Model: ${resolvedModel}`);
-    core7.info(`Workspace: ${workspacePath}`);
+    core8.info("=== OpenClaw GitHub Bot ===");
+    core8.info(`Provider: ${provider}`);
+    core8.info(`Model: ${resolvedModel}`);
+    core8.info(`Workspace: ${workspacePath}`);
     const context4 = github3.context;
     const repo = `${context4.repo.owner}/${context4.repo.repo}`;
     fs4.mkdirSync(workspacePath, { recursive: true });
@@ -75852,67 +76038,67 @@ async function run() {
       binDir = path3.join(npmPrefix, "bin");
       if (binDir && !process.env.PATH?.includes(binDir)) {
         process.env.PATH = `${binDir}:${process.env.PATH}`;
-        core7.info(`Added ${binDir} to PATH`);
+        core8.info(`Added ${binDir} to PATH`);
       }
     } catch (e) {
-      core7.warning(`Could not determine npm prefix: ${e}`);
+      core8.warning(`Could not determine npm prefix: ${e}`);
     }
     const openclawCachePath = path3.join(npmPrefix, "lib", "node_modules", "openclaw");
     const cacheKey = "openclaw-v1";
     const cachePaths = [openclawCachePath];
-    core7.info("Checking for cached OpenClaw installation...");
+    core8.info("Checking for cached OpenClaw installation...");
     let cacheHit = false;
     try {
       const restoredKey = await cache2.restoreCache(cachePaths, cacheKey);
       if (restoredKey) {
-        core7.info(`Cache hit! Restored OpenClaw from cache (key: ${restoredKey})`);
+        core8.info(`Cache hit! Restored OpenClaw from cache (key: ${restoredKey})`);
         cacheHit = true;
         try {
           const { stdout } = await execAsync("openclaw --version");
-          core7.info(`Cached OpenClaw version: ${stdout.trim()}`);
+          core8.info(`Cached OpenClaw version: ${stdout.trim()}`);
         } catch {
-          core7.warning("Cached OpenClaw is not functional, will reinstall");
+          core8.warning("Cached OpenClaw is not functional, will reinstall");
           cacheHit = false;
         }
       } else {
-        core7.info("No cache hit, will install OpenClaw");
+        core8.info("No cache hit, will install OpenClaw");
       }
-    } catch (error4) {
-      core7.warning(`Cache restore failed: ${error4}`);
+    } catch (error5) {
+      core8.warning(`Cache restore failed: ${error5}`);
     }
     if (!cacheHit) {
-      core7.info("Installing OpenClaw...");
+      core8.info("Installing OpenClaw...");
       try {
         const { stdout: installOut, stderr: installErr } = await execAsync("npm install -g openclaw@latest --force 2>&1", { timeout: 12e4 });
-        core7.info(`Install output: ${installOut.trim()}`);
-        if (installErr) core7.info(`Install stderr: ${installErr.trim()}`);
+        core8.info(`Install output: ${installOut.trim()}`);
+        if (installErr) core8.info(`Install stderr: ${installErr.trim()}`);
         try {
           await cache2.saveCache(cachePaths, cacheKey);
-          core7.info("OpenClaw installation cached successfully");
+          core8.info("OpenClaw installation cached successfully");
         } catch (saveError) {
-          core7.warning(`Failed to save cache: ${saveError}`);
+          core8.warning(`Failed to save cache: ${saveError}`);
         }
-      } catch (error4) {
-        core7.warning(`OpenClaw install issue: ${error4}`);
+      } catch (error5) {
+        core8.warning(`OpenClaw install issue: ${error5}`);
       }
     }
     try {
       const { stdout: whichResult } = await execAsync('which openclaw || echo "not found"');
-      core7.info(`which openclaw: ${whichResult.trim()}`);
+      core8.info(`which openclaw: ${whichResult.trim()}`);
       const { stdout: lsResult } = await execAsync('ls -la $(npm config get prefix)/lib/node_modules/openclaw/package.json 2>/dev/null || echo "package not found"');
-      core7.info(`openclaw package: ${lsResult.trim()}`);
+      core8.info(`openclaw package: ${lsResult.trim()}`);
       const { stdout: binCheck } = await execAsync(`cat $(npm config get prefix)/lib/node_modules/openclaw/package.json 2>/dev/null | node -e "const d=require('fs').readFileSync('/dev/stdin','utf8');const p=JSON.parse(d);console.log(JSON.stringify(p.bin||'no bin'))" || echo "no package.json"`);
-      core7.info(`openclaw bin entry: ${binCheck.trim()}`);
+      core8.info(`openclaw bin entry: ${binCheck.trim()}`);
     } catch (e) {
-      core7.info(`Debug check failed: ${e}`);
+      core8.info(`Debug check failed: ${e}`);
     }
     try {
       const { stdout } = await execAsync("openclaw --version");
-      core7.info(`OpenClaw version: ${stdout.trim()}`);
+      core8.info(`OpenClaw version: ${stdout.trim()}`);
     } catch {
       try {
         const { stdout } = await execAsync("npx openclaw --version", { timeout: 3e4 });
-        core7.info(`OpenClaw version (via npx): ${stdout.trim()}`);
+        core8.info(`OpenClaw version (via npx): ${stdout.trim()}`);
       } catch (e) {
         throw new Error(`OpenClaw is not available. Installation may have failed. Error: ${e}`);
       }
@@ -75921,17 +76107,17 @@ async function run() {
     await startGateway({ provider, apiKey, model, workspacePath });
     await waitForReady();
     const trigger = await parseTrigger(githubToken);
-    core7.info(`Trigger: ${trigger.type}`);
-    core7.info(`Message: ${trigger.message.substring(0, 200)}...`);
+    core8.info(`Trigger: ${trigger.type}`);
+    core8.info(`Message: ${trigger.message.substring(0, 200)}...`);
     client = new OpenClawClient();
     await client.connect();
     let response;
     try {
       response = await client.sendMessage(trigger.message);
-      core7.info(`Response: ${response.length} chars`);
+      core8.info(`Response: ${response.length} chars`);
     } catch (sendError) {
       const errorMsg = sendError instanceof Error ? sendError.message : String(sendError);
-      core7.error(`Agent error: ${errorMsg}`);
+      core8.error(`Agent error: ${errorMsg}`);
       if (trigger.issueNumber && githubToken) {
         const octokit = github3.getOctokit(githubToken);
         try {
@@ -75948,62 +76134,94 @@ ${errorMsg}
 \`\`\``
           });
         } catch (postError) {
-          core7.error(`Failed to post error comment: ${postError}`);
+          core8.error(`Failed to post error comment: ${postError}`);
         }
       }
       throw sendError;
     }
     if (trigger.issueNumber && !response.includes("HEARTBEAT_OK")) {
       const octokit = github3.getOctokit(githubToken);
-      try {
-        const body = response.trim() ? `\u{1F916} **OpenClaw Bot**
+      if (trigger.type === "pull_request" && trigger.prFiles) {
+        core8.info("Parsing PR review response...");
+        try {
+          const review = parseReviewResponse(response);
+          core8.info(`Parsed review: verdict=${review.verdict}, ${review.comments.length} inline comments`);
+          await postPRReview(
+            octokit,
+            context4.repo.owner,
+            context4.repo.repo,
+            trigger.issueNumber,
+            review,
+            trigger.prFiles
+          );
+          core8.info(`Posted PR review to #${trigger.issueNumber}`);
+        } catch (error5) {
+          core8.error(`Failed to post PR review: ${error5}`);
+          try {
+            await octokit.rest.issues.createComment({
+              owner: context4.repo.owner,
+              repo: context4.repo.repo,
+              issue_number: trigger.issueNumber,
+              body: `\u{1F916} **OpenClaw Bot**
+
+${response}`
+            });
+            core8.info(`Fallback: posted as comment to #${trigger.issueNumber}`);
+          } catch (commentError) {
+            core8.error(`Failed to post fallback comment: ${commentError}`);
+          }
+        }
+      } else {
+        try {
+          const body = response.trim() ? `\u{1F916} **OpenClaw Bot**
 
 ${response}` : `\u{1F916} **OpenClaw Bot**
 
 _No response was generated._`;
-        await octokit.rest.issues.createComment({
-          owner: context4.repo.owner,
-          repo: context4.repo.repo,
-          issue_number: trigger.issueNumber,
-          body
-        });
-        core7.info(`Posted to #${trigger.issueNumber}`);
-      } catch (error4) {
-        core7.error(`Failed to post comment: ${error4}`);
+          await octokit.rest.issues.createComment({
+            owner: context4.repo.owner,
+            repo: context4.repo.repo,
+            issue_number: trigger.issueNumber,
+            body
+          });
+          core8.info(`Posted to #${trigger.issueNumber}`);
+        } catch (error5) {
+          core8.error(`Failed to post comment: ${error5}`);
+        }
       }
     } else if (response.includes("HEARTBEAT_OK")) {
-      core7.info("Heartbeat OK \u2014 no action needed");
+      core8.info("Heartbeat OK \u2014 no action needed");
     } else {
-      core7.info("No issue/PR to post to \u2014 response logged above");
+      core8.info("No issue/PR to post to \u2014 response logged above");
     }
     await saveWorkspace(workspacePath, repo);
-    core7.info("=== OpenClaw complete ===");
-  } catch (error4) {
-    const errorMessage = error4 instanceof Error ? error4.message : String(error4);
-    core7.error(`Error details: ${errorMessage}`);
-    if (error4 instanceof Error && error4.stack) {
-      core7.error(`Stack trace: ${error4.stack}`);
+    core8.info("=== OpenClaw complete ===");
+  } catch (error5) {
+    const errorMessage = error5 instanceof Error ? error5.message : String(error5);
+    core8.error(`Error details: ${errorMessage}`);
+    if (error5 instanceof Error && error5.stack) {
+      core8.error(`Stack trace: ${error5.stack}`);
     }
-    core7.setFailed(errorMessage);
-    throw error4;
+    core8.setFailed(errorMessage);
+    throw error5;
   } finally {
     if (client) {
       try {
         client.disconnect();
       } catch (e) {
-        core7.warning(`Client disconnect error: ${e}`);
+        core8.warning(`Client disconnect error: ${e}`);
       }
     }
     try {
       await stopGateway();
     } catch (e) {
-      core7.warning(`Gateway stop error: ${e}`);
+      core8.warning(`Gateway stop error: ${e}`);
     }
   }
 }
 var HARD_TIMEOUT_MS = 10 * 60 * 1e3;
 var timeoutHandle = setTimeout(() => {
-  core7.error("\u23F1\uFE0F  HARD TIMEOUT: Action exceeded 10 minutes, forcing exit");
+  core8.error("\u23F1\uFE0F  HARD TIMEOUT: Action exceeded 10 minutes, forcing exit");
   stopGateway().catch(() => {
   }).finally(() => {
     process.exit(1);
@@ -76011,11 +76229,11 @@ var timeoutHandle = setTimeout(() => {
 }, HARD_TIMEOUT_MS);
 run().then(() => {
   clearTimeout(timeoutHandle);
-  core7.info("\u2705 Action completed successfully");
+  core8.info("\u2705 Action completed successfully");
   process.exit(0);
-}).catch((error4) => {
+}).catch((error5) => {
   clearTimeout(timeoutHandle);
-  core7.error(`\u274C Action failed: ${error4}`);
+  core8.error(`\u274C Action failed: ${error5}`);
   process.exit(1);
 });
 /*! Bundled license information:

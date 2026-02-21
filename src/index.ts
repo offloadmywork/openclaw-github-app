@@ -9,6 +9,7 @@ import { restoreWorkspace, saveWorkspace } from './workspace';
 import { parseTrigger } from './triggers';
 import { startGateway, waitForReady, stopGateway, resolveModel } from './gateway';
 import { OpenClawClient } from './client';
+import { parseReviewResponse, postPRReview } from './review';
 
 const execAsync = promisify(exec);
 
@@ -165,19 +166,54 @@ async function run(): Promise<void> {
     // Post response to GitHub
     if (trigger.issueNumber && !response.includes('HEARTBEAT_OK')) {
       const octokit = github.getOctokit(githubToken);
-      try {
-        const body = response.trim()
-          ? `🤖 **OpenClaw Bot**\n\n${response}`
-          : `🤖 **OpenClaw Bot**\n\n_No response was generated._`;
-        await octokit.rest.issues.createComment({
-          owner: context.repo.owner,
-          repo: context.repo.repo,
-          issue_number: trigger.issueNumber,
-          body
-        });
-        core.info(`Posted to #${trigger.issueNumber}`);
-      } catch (error) {
-        core.error(`Failed to post comment: ${error}`);
+      
+      // Handle PR reviews specially
+      if (trigger.type === 'pull_request' && trigger.prFiles) {
+        core.info('Parsing PR review response...');
+        try {
+          const review = parseReviewResponse(response);
+          core.info(`Parsed review: verdict=${review.verdict}, ${review.comments.length} inline comments`);
+          
+          await postPRReview(
+            octokit,
+            context.repo.owner,
+            context.repo.repo,
+            trigger.issueNumber,
+            review,
+            trigger.prFiles
+          );
+          core.info(`Posted PR review to #${trigger.issueNumber}`);
+        } catch (error) {
+          core.error(`Failed to post PR review: ${error}`);
+          // Fallback to regular comment if review fails
+          try {
+            await octokit.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: trigger.issueNumber,
+              body: `🤖 **OpenClaw Bot**\n\n${response}`
+            });
+            core.info(`Fallback: posted as comment to #${trigger.issueNumber}`);
+          } catch (commentError) {
+            core.error(`Failed to post fallback comment: ${commentError}`);
+          }
+        }
+      } else {
+        // Regular issue/comment response
+        try {
+          const body = response.trim()
+            ? `🤖 **OpenClaw Bot**\n\n${response}`
+            : `🤖 **OpenClaw Bot**\n\n_No response was generated._`;
+          await octokit.rest.issues.createComment({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: trigger.issueNumber,
+            body
+          });
+          core.info(`Posted to #${trigger.issueNumber}`);
+        } catch (error) {
+          core.error(`Failed to post comment: ${error}`);
+        }
       }
     } else if (response.includes('HEARTBEAT_OK')) {
       core.info('Heartbeat OK — no action needed');

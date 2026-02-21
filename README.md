@@ -22,6 +22,7 @@ This GitHub Action brings OpenClaw to your repository. Instead of being a standa
 - 🔌 **Multi-provider** — use Anthropic, xAI, OpenAI, Google, or others
 - 💭 **Persistent memory** — maintains context across runs via GitHub Actions Cache
 - 📚 **Rich repo context** — automatically includes README, recent commits, and open issues
+- 🔍 **PR code review** — analyzes diffs and posts inline review comments
 - ⚙️ **Configurable** — customize behavior via `.openclaw.yml`
 - 🔄 **Heartbeat checks** — periodic reviews of your repo
 - 💬 **Issue/PR responses** — intelligent comments on issues and pull requests
@@ -246,6 +247,33 @@ context:
 | `context.max_issues` | number | `15` | Maximum open issues to show |
 
 The context is automatically injected into every message, giving the bot awareness of your project's purpose, recent activity, and current work.
+
+### PR Code Review
+
+When a pull request is opened or updated, the bot automatically:
+1. Fetches the full diff
+2. Analyzes the code changes
+3. Posts a structured review with inline comments
+
+The review includes:
+- **Summary** — Overall assessment of the PR
+- **Inline comments** — Specific feedback on individual lines
+- **Verdict** — `approve`, `request_changes`, or `comment`
+
+**Example review output:**
+```
+🤖 OpenClaw Bot Review
+
+The PR looks good overall. A few suggestions:
+
+**src/utils.ts:42**
+Consider using `const` instead of `let` here since the value is never reassigned.
+
+**src/api.ts:78**
+This error handling could be more specific. Consider catching `NetworkError` separately.
+```
+
+The bot uses GitHub's native review system, so comments appear directly on the relevant lines in the PR diff view.
 
 ## Advanced Usage
 

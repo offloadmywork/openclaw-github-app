@@ -1,6 +1,7 @@
 import * as github from '@actions/github';
 import * as core from '@actions/core';
 import { getFormattedContext } from './context';
+import { fetchPRDiff, fetchPRFiles, getReviewInstructions } from './review';
 
 export interface TriggerContext {
   type: 'heartbeat' | 'issue_comment' | 'issue_created' | 'pull_request' | 'manual';
@@ -8,6 +9,8 @@ export interface TriggerContext {
   repoContext?: string;
   issueNumber?: number;
   isPR?: boolean;
+  // PR review specific
+  prFiles?: Array<{ filename: string; patch?: string; status: string }>;
 }
 
 /**
@@ -81,25 +84,27 @@ export async function parseTrigger(githubToken: string): Promise<TriggerContext>
   if (context.eventName === 'pull_request' && 
       (context.payload.action === 'opened' || context.payload.action === 'synchronize' || context.payload.action === 'reopened')) {
     const pr = context.payload.pull_request!;
+    const { owner, repo } = context.repo;
     
-    // Fetch files changed
-    let filesChanged: string[] = [];
-    try {
-      const { data: files } = await octokit.rest.pulls.listFiles({
-        owner: context.repo.owner,
-        repo: context.repo.repo,
-        pull_number: pr.number
-      });
-      filesChanged = files.map(f => `${f.status}: ${f.filename} (+${f.additions}/-${f.deletions})`);
-    } catch (error) {
-      core.warning(`Failed to fetch PR files: ${error}`);
-    }
+    // Fetch full diff for review
+    core.info('Fetching PR diff for review...');
+    const diff = await fetchPRDiff(octokit, owner, repo, pr.number);
+    const prFiles = await fetchPRFiles(octokit, owner, repo, pr.number);
     
-    const diffSummary = filesChanged.length > 0 
-      ? `\n\nFiles changed:\n${filesChanged.slice(0, 20).join('\n')}${filesChanged.length > 20 ? `\n... and ${filesChanged.length - 20} more files` : ''}`
+    core.info(`Fetched diff: ${diff.length} chars, ${prFiles.length} files`);
+    
+    // Build file summary
+    const filesSummary = prFiles.length > 0 
+      ? `\n\nFiles changed (${prFiles.length}):\n${prFiles.slice(0, 20).map(f => `- ${f.status}: ${f.filename}`).join('\n')}${prFiles.length > 20 ? `\n... and ${prFiles.length - 20} more files` : ''}`
       : '';
     
-    const eventMessage = `PR #${pr.number} by @${pr.user.login}: ${pr.title}\n\n${pr.body || '(no description)'}${diffSummary}\n\n---\n\nPR URL: ${pr.html_url}\nBranch: ${pr.head.ref} → ${pr.base.ref}`;
+    // Build the review prompt with diff
+    const reviewInstructions = getReviewInstructions();
+    const prInfo = `PR #${pr.number} by @${pr.user.login}: ${pr.title}\n\n${pr.body || '(no description)'}${filesSummary}\n\nPR URL: ${pr.html_url}\nBranch: ${pr.head.ref} → ${pr.base.ref}`;
+    
+    const diffSection = diff ? `\n\n## Diff\n\n\`\`\`diff\n${diff}\n\`\`\`` : '';
+    
+    const eventMessage = `${reviewInstructions}\n\n---\n\n## Pull Request\n\n${prInfo}${diffSection}`;
     const message = repoContext ? `${repoContext}\n\n---\n\n${eventMessage}` : eventMessage;
     
     return {
@@ -107,7 +112,8 @@ export async function parseTrigger(githubToken: string): Promise<TriggerContext>
       message,
       repoContext,
       issueNumber: pr.number,
-      isPR: true
+      isPR: true,
+      prFiles
     };
   }
   
