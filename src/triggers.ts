@@ -1,9 +1,11 @@
 import * as github from '@actions/github';
 import * as core from '@actions/core';
+import { getFormattedContext } from './context';
 
 export interface TriggerContext {
   type: 'heartbeat' | 'issue_comment' | 'issue_created' | 'pull_request' | 'manual';
   message: string;
+  repoContext?: string;
   issueNumber?: number;
   isPR?: boolean;
 }
@@ -16,12 +18,28 @@ export async function parseTrigger(githubToken: string): Promise<TriggerContext>
   const octokit = github.getOctokit(githubToken);
   
   core.info(`Event: ${context.eventName}, Action: ${context.payload.action}`);
+
+  // Build repo context (README, commits, issues, config)
+  core.info('Building repository context...');
+  let repoContext = '';
+  try {
+    repoContext = await getFormattedContext(githubToken);
+    if (repoContext) {
+      core.info(`Context built: ${repoContext.length} chars`);
+    }
+  } catch (error) {
+    core.warning(`Failed to build repo context: ${error}`);
+  }
   
   // Schedule (heartbeat)
   if (context.eventName === 'schedule') {
+    const message = repoContext
+      ? `${repoContext}\n\n---\n\nHeartbeat check. Review the repo, look for issues to work on, update memory.`
+      : 'Heartbeat check. Review the repo, look for issues to work on, update memory.';
     return {
       type: 'heartbeat',
-      message: 'Heartbeat check. Review the repo, look for issues to work on, update memory.'
+      message,
+      repoContext
     };
   }
   
@@ -30,9 +48,13 @@ export async function parseTrigger(githubToken: string): Promise<TriggerContext>
     const comment = context.payload.comment!;
     const issue = context.payload.issue!;
     
+    const eventMessage = `New comment on ${issue.pull_request ? 'PR' : 'issue'} #${issue.number} by @${comment.user.login}:\n\n${comment.body}\n\n---\n\nIssue title: ${issue.title}\nIssue URL: ${issue.html_url}`;
+    const message = repoContext ? `${repoContext}\n\n---\n\n${eventMessage}` : eventMessage;
+    
     return {
       type: 'issue_comment',
-      message: `New comment on ${issue.pull_request ? 'PR' : 'issue'} #${issue.number} by @${comment.user.login}:\n\n${comment.body}\n\n---\n\nIssue title: ${issue.title}\nIssue URL: ${issue.html_url}`,
+      message,
+      repoContext,
       issueNumber: issue.number,
       isPR: !!issue.pull_request
     };
@@ -43,9 +65,13 @@ export async function parseTrigger(githubToken: string): Promise<TriggerContext>
     const issue = context.payload.issue!;
     const action = context.payload.action;
     
+    const eventMessage = `Issue #${issue.number} ${action} by @${issue.user.login}: ${issue.title}\n\n${issue.body || '(no description)'}\n\n---\n\nIssue URL: ${issue.html_url}`;
+    const message = repoContext ? `${repoContext}\n\n---\n\n${eventMessage}` : eventMessage;
+    
     return {
       type: 'issue_created',
-      message: `Issue #${issue.number} ${action} by @${issue.user.login}: ${issue.title}\n\n${issue.body || '(no description)'}\n\n---\n\nIssue URL: ${issue.html_url}`,
+      message,
+      repoContext,
       issueNumber: issue.number,
       isPR: false
     };
@@ -73,9 +99,13 @@ export async function parseTrigger(githubToken: string): Promise<TriggerContext>
       ? `\n\nFiles changed:\n${filesChanged.slice(0, 20).join('\n')}${filesChanged.length > 20 ? `\n... and ${filesChanged.length - 20} more files` : ''}`
       : '';
     
+    const eventMessage = `PR #${pr.number} by @${pr.user.login}: ${pr.title}\n\n${pr.body || '(no description)'}${diffSummary}\n\n---\n\nPR URL: ${pr.html_url}\nBranch: ${pr.head.ref} → ${pr.base.ref}`;
+    const message = repoContext ? `${repoContext}\n\n---\n\n${eventMessage}` : eventMessage;
+    
     return {
       type: 'pull_request',
-      message: `PR #${pr.number} by @${pr.user.login}: ${pr.title}\n\n${pr.body || '(no description)'}${diffSummary}\n\n---\n\nPR URL: ${pr.html_url}\nBranch: ${pr.head.ref} → ${pr.base.ref}`,
+      message,
+      repoContext,
       issueNumber: pr.number,
       isPR: true
     };
@@ -86,9 +116,13 @@ export async function parseTrigger(githubToken: string): Promise<TriggerContext>
     const comment = context.payload.comment!;
     const pr = context.payload.pull_request!;
     
+    const eventMessage = `New review comment on PR #${pr.number} by @${comment.user.login}:\n\n${comment.body}\n\nFile: ${comment.path}${comment.line ? ` (line ${comment.line})` : ''}\n\n---\n\nPR title: ${pr.title}\nPR URL: ${pr.html_url}`;
+    const message = repoContext ? `${repoContext}\n\n---\n\n${eventMessage}` : eventMessage;
+    
     return {
       type: 'issue_comment',
-      message: `New review comment on PR #${pr.number} by @${comment.user.login}:\n\n${comment.body}\n\nFile: ${comment.path}${comment.line ? ` (line ${comment.line})` : ''}\n\n---\n\nPR title: ${pr.title}\nPR URL: ${pr.html_url}`,
+      message,
+      repoContext,
       issueNumber: pr.number,
       isPR: true
     };
@@ -96,15 +130,21 @@ export async function parseTrigger(githubToken: string): Promise<TriggerContext>
   
   // Manual trigger
   if (context.eventName === 'workflow_dispatch') {
+    const eventMessage = 'Manual trigger. Check for anything that needs attention.';
+    const message = repoContext ? `${repoContext}\n\n---\n\n${eventMessage}` : eventMessage;
     return {
       type: 'manual',
-      message: 'Manual trigger. Check for anything that needs attention.'
+      message,
+      repoContext
     };
   }
   
   // Unknown trigger
+  const eventMessage = `Unknown trigger: ${context.eventName}. Please investigate.`;
+  const message = repoContext ? `${repoContext}\n\n---\n\n${eventMessage}` : eventMessage;
   return {
     type: 'manual',
-    message: `Unknown trigger: ${context.eventName}. Please investigate.`
+    message,
+    repoContext
   };
 }

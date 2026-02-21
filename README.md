@@ -21,6 +21,8 @@ This GitHub Action brings OpenClaw to your repository. Instead of being a standa
 - 🤖 **Real OpenClaw** — same agent, same capabilities
 - 🔌 **Multi-provider** — use Anthropic, xAI, OpenAI, Google, or others
 - 💭 **Persistent memory** — maintains context across runs via GitHub Actions Cache
+- 📚 **Rich repo context** — automatically includes README, recent commits, and open issues
+- ⚙️ **Configurable** — customize behavior via `.openclaw.yml`
 - 🔄 **Heartbeat checks** — periodic reviews of your repo
 - 💬 **Issue/PR responses** — intelligent comments on issues and pull requests
 - 🧠 **Learning** — builds up memory and understanding of your project over time
@@ -211,6 +213,39 @@ I help maintain this repository by:
 I'm friendly, helpful, and focused on making contributors successful.
 I use clear language and avoid jargon unless necessary.
 ```
+
+### Repository Context (`.openclaw.yml`)
+
+The bot automatically builds context about your repository including README, recent commits, and open issues. You can customize this behavior by creating `.openclaw.yml` (or `.github/openclaw.yml`):
+
+```yaml
+# Custom system prompt for your project
+system_prompt: |
+  You are a code reviewer for a TypeScript project.
+  Focus on type safety, error handling, and performance.
+  Always suggest specific improvements with code examples.
+
+# Control what context is included
+context:
+  include_readme: true      # Include README.md content (default: true)
+  readme_max_chars: 4000    # Max chars for README (default: 4000)
+  recent_commits: 10        # Number of recent commits to include (default: 10)
+  open_issues: true         # Include open issues list (default: true)
+  max_issues: 15            # Max number of issues to include (default: 15)
+```
+
+#### Context Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `system_prompt` | string | - | Custom instructions for the bot |
+| `context.include_readme` | boolean | `true` | Include README.md content |
+| `context.readme_max_chars` | number | `4000` | Maximum characters from README |
+| `context.recent_commits` | number | `10` | Number of recent commits to show |
+| `context.open_issues` | boolean | `true` | Include open issues list |
+| `context.max_issues` | number | `15` | Maximum open issues to show |
+
+The context is automatically injected into every message, giving the bot awareness of your project's purpose, recent activity, and current work.
 
 ## Advanced Usage
 
